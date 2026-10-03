@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jiya's Learning Adventure</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    /* Styling to make text inputs look playful */
+    ::placeholder { color: #d8b4fe; /* Purple 300 */ opacity: 1; }
+    :-ms-input-placeholder { color: #d8b4fe; }
+    ::-ms-input-placeholder { color: #d8b4fe; }
+    
+    /* Subtle animation for floating character */
+    @keyframes floatCharacter {
+      0%, 100% { transform: translateY(0px) rotate(3deg); }
+      50% { transform: translateY(-15px) rotate(-3deg); }
+    }
+    .floating-kid {
+      animation: floatCharacter 4s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-100 min-h-screen font-sans relative">
+
+  <!-- NEW: SUBTLE SHADED CHILD BACKGROUND (Center/Left) -->
+  <!-- This uses an SVG image, but you can replace the URL with your child's picture later. -->
+  <div class="fixed inset-0 flex items-center justify-center opacity-5 pointer-events-none z-0">
+    <img src="https://img.icons8.com/isometric/512/user-female-circle.png" 
+         alt="Shaded silhouette"
+         class="w-[60vh] h-[60vh] object-contain">
+  </div>
+
+  <!-- Main Content Wrapper (Keep this above the background graphic) -->
+  <div class="max-w-5xl mx-auto p-4 md:p-8 space-y-8 relative z-10">
+
+    <!-- Header Section -->
+    <header class="bg-white/95 rounded-full p-4 shadow-xl border-4 border-indigo-200 flex flex-col md:flex-row items-center justify-between gap-4 backdrop-blur-sm">
+      <div class="flex items-center gap-4">
+        <!-- Interactive Avatar Emoji -->
+        <button id="avatarBtn" onclick="changeEmoji()" class="text-6xl bg-indigo-100 hover:bg-indigo-200 p-3 rounded-full transition transform hover:scale-110 shadow-inner">
+          🌟
+        </button>
+        <div>
+          <!-- Placeholder: Child's Name/Title -->
+          <input type="text" id="heroName" value="Super Jiya's Adventure" 
+                 class="text-3xl font-black text-indigo-900 border-b-4 border-dotted border-indigo-200 focus:outline-none focus:border-indigo-600 bg-transparent w-full">
+          <p class="text-gray-500 text-sm mt-1">HQ Dashboard & Learning Journal</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 bg-amber-50 px-6 py-4 rounded-full border-2 border-amber-300 shadow-lg">
+        <span class="text-4xl">⭐</span>
+        <div>
+          <p class="text-xs font-bold text-amber-700 uppercase tracking-wider">Total Stars</p>
+          <p id="starCount" class="text-3xl font-black text-amber-900">0</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- NEW: Task 2: Profile Section (With Profile Graphic) -->
+    <section class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-3xl p-6 shadow-xl text-white border-4 border-indigo-300 relative overflow-hidden">
+      <!-- Graphic character for this card -->
+      <img src="https://img.icons8.com/external-flat-icons-inmotus-design/256/external-Girl-avatar-flat-icons-inmotus-design.png" 
+           alt="Girl cartoon"
+           class="absolute -right-10 -bottom-10 w-48 h-48 opacity-20 pointer-events-none">
+
+      <div class="flex items-center justify-between mb-5 relative z-10">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl">‍♀️🦸‍♀️</span>
+          <div>
+            <h2 class="text-2xl font-black">All About Me! (Task 2)</h2>
+            <p class="text-purple-100 text-sm">Tell your story & customize your Hero Profile</p>
+          </div>
+        </div>
+        <span class="bg-white/20 text-xs px-4 py-1.5 rounded-full font-bold uppercase tracking-wider border border-white/30">Quest for next time</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 relative z-10 bg-white/10 p-5 rounded-2xl backdrop-blur-sm border border-white/10">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-purple-200 mb-1.5">My Secret Superpower</label>
+          <!-- Blank Input for Superpower -->
+          <input type="text" id="superpowerInput" placeholder="e.g., Drawing / Super Speed Math / Hugs!" 
+                 class="w-full bg-white/20 border border-purple-200/30 rounded-xl px-4 py-3 text-white placeholder-purple-200 focus:outline-none focus:ring-4 focus:ring-amber-300 text-base font-medium">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-purple-200 mb-1.5">Favorite Color & Fun Hobby</label>
+          <!-- Blank Input for Favorites -->
+          <input type="text" id="favoriteInput" placeholder="e.g., Rainbow Colors & Dancing" 
+                 class="w-full bg-white/20 border border-purple-200/30 rounded-xl px-4 py-3 text-white placeholder-purple-200 focus:outline-none focus:ring-4 focus:ring-amber-300 text-base font-medium">
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-purple-200 mb-1.5">My Story (Bio)</label>
+          <!-- Editable Biography Textarea -->
+          <textarea id="bioInput" rows="3" placeholder="Write something fun about yourself here! What are your adventures like?" 
+                    class="w-full bg-white/20 border border-purple-200/30 rounded-xl px-4 py-3 text-white placeholder-purple-200 focus:outline-none focus:ring-4 focus:ring-amber-300 text-base font-medium leading-relaxed"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- NEW: Task 1: Showcase Section (With School/Camera Graphics) -->
+    <section class="bg-white/95 rounded-3xl p-6 shadow-xl border-4 border-pink-200 space-y-5 relative backdrop-blur-sm overflow-hidden">
+       <!-- Graphic characters for this card -->
+       <img src="https://img.icons8.com/fluency/256/polaroid-camera.png" alt="Camera icon" class="absolute left-1/2 bottom-0 w-24 h-24 opacity-10">
+       <img src="https://img.icons8.com/fluency/256/abc.png" alt="ABC icon" class="absolute -right-8 top-10 w-24 h-24 opacity-10">
+
+      <div class="flex items-center justify-between gap-4 relative z-10">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl">📸</span>
+          <div>
+            <h2 class="text-2xl font-black text-gray-800">My Schoolwork Wins (Task 1)</h2>
+            <p class="text-gray-500 text-sm">Snap photos of good grades, art projects, and neat handwriting!</p>
+          </div>
+        </div>
+        <!-- Input for Uploading Photos -->
+        <label for="photoUpload" class="cursor-pointer bg-pink-500 hover:bg-pink-600 text-white font-black px-6 py-3 rounded-full shadow-lg transition transform active:scale-95 flex items-center gap-2 text-base whitespace-nowrap">
+          <span>➕ Snap Photo</span>
+          <input type="file" id="photoUpload" accept="image/*" capture="environment" class="hidden" onchange="handleFileUpload(event)">
+        </label>
+      </div>
+
+      <!-- NEW: Interactive Challenge Note -->
+      <div class="bg-pink-50 border-2 border-pink-100 p-4 rounded-xl flex items-center gap-4 relative z-10">
+          <img src="https://img.icons8.com/color/256/pencil-tip.png" alt="Pencil" class="w-12 h-12">
+          <p class="text-pink-950 font-medium text-sm">Challenge for this visit: Jiya, can you find **one** drawing or homework page and upload it here? Mom or Dad will help!</p>
+      </div>
+
+      <!-- Photo Gallery (New photos appear here) -->
+      <div id="gallery" class="grid grid-cols-2 md:grid-cols-3 gap-5 pt-3 relative z-10">
+          <!-- The initial page starts with no photos, making room for new uploads. -->
+      </div>
+    </section>
+
+    <!-- NEW: Quests Section (With Character Graphic) -->
+    <section class="bg-white/95 rounded-3xl p-6 shadow-xl border-4 border-purple-200 space-y-5 relative backdrop-blur-sm overflow-hidden">
+      <!-- Graphic character for this card -->
+      <img src="https://img.icons8.com/fluency/256/trophy.png" 
+           alt="Trophy"
+           class="absolute -right-5 -bottom-5 w-32 h-32 opacity-15 pointer-events-none">
+
+      <div class="flex items-center gap-3 relative z-10">
+        <span class="text-4xl">🎯</span>
+        <div>
+          <h2 class="text-2xl font-black text-gray-800">Your Hero Quests</h2>
+          <p class="text-gray-500 text-sm">Check off these tasks to earn ⭐ stars!</p>
+        </div>
+      </div>
+
+      <div class="space-y-4 relative z-10">
+        <!-- Quest Checklist Item 1 -->
+        <div class="flex items-center justify-between bg-purple-50 p-5 rounded-3xl border-2 border-purple-100 hover:border-purple-300 hover:bg-purple-100/50 transition cursor-pointer">
+          <div class="flex items-center gap-4">
+            <input type="checkbox" class="w-7 h-7 rounded-lg text-purple-600 focus:ring-purple-400 cursor-pointer border-2 border-purple-200" onchange="completeQuest(this, 2)">
+            <span class="font-bold text-gray-800 text-lg">Snap & upload one picture (Task 1)</span>
+          </div>
+          <span class="bg-amber-100 text-amber-800 font-bold px-4 py-1.5 rounded-full text-sm shadow-inner">+2 ⭐</span>
+        </div>
+
+        <!-- Quest Checklist Item 2 -->
+        <div class="flex items-center justify-between bg-purple-50 p-5 rounded-3xl border-2 border-purple-100 hover:border-purple-300 hover:bg-purple-100/50 transition cursor-pointer">
+          <div class="flex items-center gap-4">
+            <input type="checkbox" class="w-7 h-7 rounded-lg text-purple-600 focus:ring-purple-400 cursor-pointer border-2 border-purple-200" onchange="completeQuest(this, 3)">
+            <span class="font-bold text-gray-800 text-lg">Help fill out your Profile (Task 2)</span>
+          </div>
+          <span class="bg-amber-100 text-amber-800 font-bold px-4 py-1.5 rounded-full text-sm shadow-inner">+3 ⭐</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- NEW: FLOATING KID CHARACTER (Full right side overlay) -->
+  <div class="fixed right-4 bottom-1/3 z-50 pointer-events-none w-48 h-48 floating-kid opacity-90 md:opacity-100">
+    <img src="https://img.icons8.com/fluency/256/flying-stork.png" alt="Floating helper" class="w-full h-full">
+  </div>
+
+  <script>
+    let stars = 0; // The star count starts at 0 for Jiya.
+    const emojis = ['🌟', '🦸‍♀️️', '🎨', '🚀', '🦄', '🦁', '🧜‍♀️', '⚡'];
+    let currentEmojiIndex = 0;
+
+    function changeEmoji() {
+      // Switches the emoji when clicked.
+      currentEmojiIndex = (currentEmojiIndex + 1) % emojis.length;
+      document.getElementById('avatarBtn').innerText = emojis[currentEmojiIndex];
+    }
+
+    function completeQuest(checkbox, starValue) {
+      // Adds or removes stars when quests are checked.
+      if (checkbox.checked) {
+        stars += starValue;
+        document.getElementById('starCount').innerText = stars;
+        // Explode confetti on success!
+        confetti({ particleCount: 120, spread: 70, origin: { y: 0.8 } });
+      } else {
+        stars -= starValue;
+        document.getElementById('starCount').innerText = stars;
+      }
+    }
+
+    function handleFileUpload(event) {
+      // Handles taking or choosing a photo.
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const gallery = document.getElementById('gallery');
+        const newCard = document.createElement('div');
+        newCard.className = 'bg-pink-100/80 rounded-2xl p-3 border-2 border-pink-200 flex flex-col justify-between animate-bounce shadow-md backdrop-blur-sm relative overflow-hidden';
+        
+        // Use default icons for initial categories, later we can add proper labeling.
+        const catEmoji = ['🖼️', '📝', '✨', '🖍️'][Math.floor(Math.random() * 4)];
+
+        newCard.innerHTML = `
+          <div class="h-36 bg-pink-50 rounded-xl mb-2 flex items-center justify-center overflow-hidden border border-pink-100 shadow-inner relative">
+            <img src="${e.target.result}" class="w-full h-full object-cover rounded-xl" />
+            <span class="absolute top-1 right-1 text-2xl">${catEmoji}</span>
+          </div>
+          <p class="font-bold text-gray-800 text-sm truncate">${file.name.substring(0, 15)}...</p>
+          <p class="text-xs text-gray-400 mt-1">Just now!</p>
+        `;
+        gallery.prepend(newCard);
+        
+        // Reward 1 bonus star just for uploading!
+        stars += 1;
+        document.getElementById('starCount').innerText = stars;
+        confetti({ particleCount: 60, spread: 50, origin: { y: 0.7 } });
+      };
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
