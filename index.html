@@ -178,7 +178,7 @@
     let stars = 0;
     
     // Emojis array includes '📸' at the end to trigger camera capture!
-    const avatarOptions = ['🌟', '🦸‍♀️', '🎨', '🚀', '🦄', '🦁', '🧜‍♀️', '⚡', '📸 Snap Photo'];
+    const avatarOptions = ['🌟', '🦸‍♀️', '🎨', '🚀', '🦄', '🦁', '🧜‍♀️', '⚡', '📸'];
     let currentOptionIndex = 0;
 
     // Load existing profile avatar & photo gallery on page launch
@@ -192,19 +192,17 @@
 
     // Cycle through emoji options, opening camera picker on the 📸 option
     function cycleAvatarOptions() {
-      currentOptionIndex = (currentOptionIndex + 1) % avatarOptions.length;
-      const selected = avatarOptions[currentOptionIndex];
+  currentOptionIndex = (currentOptionIndex + 1) % avatarOptions.length;
+  const selected = avatarOptions[currentOptionIndex];
 
-      if (selected.includes('📸')) {
-        // Trigger file input camera launch
-        document.getElementById('avatarUpload').click();
-      } else {
-        // Clear saved custom photo if switching back to emojis
-        localStorage.removeItem('jiya_profile_avatar');
-        const display = document.getElementById('avatarDisplay');
-        display.innerHTML = selected;
-      }
-    }
+  if (selected === '📸') {
+    document.getElementById('avatarDisplay').innerText = selected;
+    document.getElementById('avatarUpload').click();
+  } else {
+    localStorage.removeItem('jiya_profile_avatar');
+    document.getElementById('avatarDisplay').innerText = selected;
+  }
+}
 
     // Upload child's profile photo to Supabase
     async function handleAvatarUpload(event) {
