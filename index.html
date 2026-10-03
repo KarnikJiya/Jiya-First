@@ -6,6 +6,8 @@
   <title>Jiya's Learning Adventure</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Supabase JS Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     /* Prevent horizontal scrolling on mobile */
     html, body {
@@ -110,7 +112,7 @@
         </div>
         
         <label for="photoUpload" class="w-full sm:w-auto text-center cursor-pointer bg-pink-500 hover:bg-pink-600 text-white font-bold px-4 py-2.5 rounded-2xl shadow-md transition transform active:scale-95 flex items-center justify-center gap-2 text-sm">
-          <span>➕ Snap Photo</span>
+          <span id="uploadBtnText">➕ Snap Photo</span>
           <input type="file" id="photoUpload" accept="image/*" capture="environment" class="hidden" onchange="handleFileUpload(event)">
         </label>
       </div>
@@ -163,9 +165,17 @@
   </div>
 
   <script>
+    // --- SUPABASE CONFIGURATION ---
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE'; // Replace with your Project URL from Supabase Settings -> API
+    const SUPABASE_ANON_KEY = 'sb_publishable_BHP8dx_Lg1I8Ad1wZ-ZF8A_LxNZ77tJ';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     let stars = 0;
     const emojis = ['🌟', '🦸‍♀', '🎨', '🚀', '🦄', '🦁', '🧜‍♀️', '⚡'];
     let currentEmojiIndex = 0;
+
+    // Fetch existing photos when page opens
+    window.addEventListener('DOMContentLoaded', loadPhotosFromCloud);
 
     function changeEmoji() {
       currentEmojiIndex = (currentEmojiIndex + 1) % emojis.length;
@@ -183,33 +193,72 @@
       }
     }
 
-    function handleFileUpload(event) {
+    async function handleFileUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const gallery = document.getElementById('gallery');
-        const newCard = document.createElement('div');
-        newCard.className = 'bg-pink-100/80 rounded-2xl p-2 border border-pink-200 flex flex-col justify-between shadow-sm relative overflow-hidden';
-        
-        const catEmoji = ['🖼️️', '📝', '✨', '🖍️'][Math.floor(Math.random() * 4)];
+      const btnText = document.getElementById('uploadBtnText');
+      btnText.innerText = '⏳ Uploading...';
 
-        newCard.innerHTML = `
-          <div class="h-28 sm:h-36 bg-pink-50 rounded-xl mb-1.5 flex items-center justify-center overflow-hidden border border-pink-100 relative">
-            <img src="${e.target.result}" class="w-full h-full object-cover rounded-xl" />
-            <span class="absolute top-1 right-1 text-lg">${catEmoji}</span>
-          </div>
-          <p class="font-bold text-gray-800 text-xs truncate">${file.name.substring(0, 12)}...</p>
-          <p class="text-[10px] text-gray-400 mt-0.5">Just now!</p>
-        `;
-        gallery.prepend(newCard);
+      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+
+      // Upload file to Supabase storage bucket
+      const { data, error } = await supabaseClient.storage
+        .from('schoolwork-photos')
+        .upload(fileName, file);
+
+      if (error) {
+        alert('Upload failed: ' + error.message);
+        btnText.innerText = '➕ Snap Photo';
+        return;
+      }
+
+      // Get public web link
+      const { data: urlData } = supabaseClient.storage
+        .from('schoolwork-photos')
+        .getPublicUrl(fileName);
+
+      renderPhotoCard(urlData.publicUrl, file.name);
+
+      btnText.innerText = '➕ Snap Photo';
+      stars += 1;
+      document.getElementById('starCount').innerText = stars;
+      confetti({ particleCount: 60, spread: 50, origin: { y: 0.7 } });
+    }
+
+    function renderPhotoCard(url, title) {
+      const gallery = document.getElementById('gallery');
+      const newCard = document.createElement('div');
+      newCard.className = 'bg-pink-100/80 rounded-2xl p-2 border border-pink-200 flex flex-col justify-between shadow-sm relative overflow-hidden';
+      
+      const catEmoji = ['🖼', '📝', '✨', '🖍️️'][Math.floor(Math.random() * 4)];
+
+      newCard.innerHTML = `
+        <div class="h-28 sm:h-36 bg-pink-50 rounded-xl mb-1.5 flex items-center justify-center overflow-hidden border border-pink-100 relative">
+          <img src="${url}" class="w-full h-full object-cover rounded-xl" />
+          <span class="absolute top-1 right-1 text-lg">${catEmoji}</span>
+        </div>
+        <p class="font-bold text-gray-800 text-xs truncate">${title.substring(0, 12)}...</p>
+        <p class="text-[10px] text-gray-400 mt-0.5">Saved in Cloud ☁️</p>
+      `;
+      gallery.prepend(newCard);
+    }
+
+    async function loadPhotosFromCloud() {
+      const { data, error } = await supabaseClient.storage
+        .from('schoolwork-photos')
+        .list('', { sortBy: { column: 'created_at', order: 'desc' } });
+
+      if (error || !data) return;
+
+      data.forEach(file => {
+        if (file.name === '.emptyFolderPlaceholder') return;
+        const { data: urlData } = supabaseClient.storage
+          .from('schoolwork-photos')
+          .getPublicUrl(file.name);
         
-        stars += 1;
-        document.getElementById('starCount').innerText = stars;
-        confetti({ particleCount: 50, spread: 50, origin: { y: 0.7 } });
-      };
-      reader.readAsDataURL(file);
+        renderPhotoCard(urlData.publicUrl, file.name);
+      });
     }
   </script>
 </body>
