@@ -60,12 +60,19 @@
         </div>
       </div>
 
-      <div class="flex items-center justify-center gap-2 bg-amber-50 px-4 py-2 sm:py-3 rounded-2xl border border-amber-300 shadow-sm w-full sm:w-auto">
-        <span class="text-2xl sm:text-3xl">⭐</span>
-        <div class="flex items-center gap-2 sm:block">
-          <p class="text-xs font-bold text-amber-700 uppercase tracking-wider">Total Stars:</p>
-          <p id="starCount" class="text-xl sm:text-2xl font-black text-amber-900">0</p>
+      <div class="flex items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto">
+        <div class="flex items-center justify-center gap-2 bg-amber-50 px-4 py-2 sm:py-3 rounded-2xl border border-amber-300 shadow-sm flex-1 sm:flex-none">
+          <span class="text-2xl sm:text-3xl">⭐</span>
+          <div class="flex items-center gap-2 sm:block">
+            <p class="text-xs font-bold text-amber-700 uppercase tracking-wider">Total Stars:</p>
+            <p id="starCount" class="text-xl sm:text-2xl font-black text-amber-900">0</p>
+          </div>
         </div>
+
+        <!-- Reset Button -->
+        <button onclick="resetApp()" title="Reset stars & photos" class="bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 sm:py-3 rounded-2xl shadow-md transition transform active:scale-95 flex items-center gap-1.5 flex-shrink-0 border border-rose-400">
+          🔄 <span class="hidden sm:inline">Reset</span>
+        </button>
       </div>
     </header>
 
@@ -206,12 +213,12 @@
 
     let stars = 0;
     let selfieCount = 0;
-    const emojis = ['🌟', '🦸‍♀️', '🎨', '🚀', '🦄', '🦁', '🧜‍♀️️', '⚡'];
+    const emojis = ['🌟', '🦸‍♀️', '🎨', '🚀', '🦄', '🦁', '🧜‍♀️', '⚡'];
     let currentEmojiIndex = 0;
     let localGallery = [];
 
     const ribbonMessages = [
-      "🎗️ Super Learner Ribbon! 🎗️",
+      "🎗️ Super Learner Ribbon! 🎗️️",
       "🔥 Streak Master Badge! 🔥",
       "⭐ Genius Star Unlocked! ⭐",
       "🏆 Superstar Champion! 🏆",
@@ -339,19 +346,74 @@
       saveUserData();
     }
 
-    // --- ENHANCED CELEBRATION (BIGGER, LONGER CONFETTI) ---
+    // --- RESET FUNCTIONALITY ---
+    async function resetApp() {
+      if (!confirm("Are you sure you want to reset stars to 0 and remove all saved photos?")) return;
+
+      // 1. Reset local variables
+      stars = 0;
+      selfieCount = 0;
+      localGallery = [];
+
+      // 2. Clear LocalStorage keys
+      localStorage.removeItem('jiya_stars');
+      localStorage.removeItem('jiya_selfie_count');
+      localStorage.removeItem('jiya_local_gallery');
+      localStorage.removeItem('jiya_profile_avatar');
+      for (let i = 1; i <= 3; i++) {
+        localStorage.removeItem(`jiya_task_${i}_done`);
+      }
+
+      // 3. Clear cloud photos from Supabase Storage (if available)
+      if (supabaseClient) {
+        try {
+          const { data: fileList } = await supabaseClient.storage.from('schoolwork-photos').list();
+          if (fileList && fileList.length > 0) {
+            const filesToRemove = fileList
+              .map(f => f.name)
+              .filter(name => name !== '.emptyFolderPlaceholder');
+            if (filesToRemove.length > 0) {
+              await supabaseClient.storage.from('schoolwork-photos').remove(filesToRemove);
+            }
+          }
+        } catch (err) {
+          console.warn('Supabase storage clear warning:', err);
+        }
+      }
+
+      // 4. Reset Supabase Cloud State
+      saveStateToSupabase();
+
+      // 5. Update UI instantly
+      document.getElementById('starCount').innerText = '0';
+      document.getElementById('gallery').innerHTML = '';
+      document.getElementById('avatarDisplay').innerHTML = emojis[0];
+      updateSelfieBadge();
+
+      // Reset task buttons back to submit mode
+      for (let i = 1; i <= 3; i++) {
+        const btn = document.getElementById(`task${i}Btn`);
+        if (btn) {
+          btn.innerText = "Submit ✨";
+          btn.className = "bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-3 py-2 rounded-xl shadow transition transform active:scale-95";
+          btn.onclick = () => submitTask(i);
+        }
+      }
+
+      alert("App reset successfully! Stars set to 0 and saved photos removed.");
+    }
+
+    // --- ENHANCED CELEBRATION ---
     function triggerCelebration(msg) {
       if (typeof confetti === 'function') {
-        // Burst 1: Initial massive explosion from center
         confetti({
           particleCount: 120,
           spread: 100,
           startVelocity: 45,
-          scalar: 1.4, // Bigger confetti pieces!
+          scalar: 1.4,
           origin: { y: 0.5 }
         });
 
-        // Burst 2: Side cannons firing inward after 400ms
         setTimeout(() => {
           confetti({
             particleCount: 80,
@@ -371,19 +433,17 @@
           });
         }, 400);
 
-        // Burst 3: Super star rain shower after 1.2s
         setTimeout(() => {
           confetti({
             particleCount: 150,
             spread: 120,
             startVelocity: 35,
-            ticks: 300, // Keeps particles falling longer
-            scalar: 1.5, // Extra large pieces
+            ticks: 300,
+            scalar: 1.5,
             origin: { y: 0.2 }
           });
         }, 1200);
 
-        // Burst 4: Final celebration wave at 2.2s
         setTimeout(() => {
           confetti({
             particleCount: 90,
@@ -395,7 +455,6 @@
         }, 2200);
       }
 
-      // Display floating ribbon overlay
       const overlay = document.getElementById('ribbonOverlay');
       const ribbonText = document.getElementById('ribbonText');
       ribbonText.innerText = msg || ribbonMessages[Math.floor(Math.random() * ribbonMessages.length)];
@@ -403,7 +462,6 @@
       overlay.classList.remove('hidden');
       overlay.classList.add('ribbon-pop');
 
-      // Extended timer (4 seconds total duration)
       setTimeout(() => {
         overlay.classList.add('hidden');
         overlay.classList.remove('ribbon-pop');
