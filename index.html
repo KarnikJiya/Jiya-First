@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Weekly Learning App</title>
 
-  <!-- 1. TAILWIND CSS CDN -->
+  <!-- 1. TAILWIND CSS CDN (For Styling) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- 2. CANVAS CONFETTI CDN -->
+  <!-- 2. REQUIRED CONFETTI ENGINE (Canvas-Confetti CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen p-4 flex flex-col items-center justify-center space-y-6">
@@ -36,7 +36,7 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- EDITABLE "YOU LIKE IT, YOU SNAP IT!" CARD                 -->
+    <!-- EDITABLE "ALL ABOUT ME" CARD                              -->
     <!-- ========================================================= -->
     <div id="aboutMeCard" class="p-5 rounded-2xl border-2 shadow-xl space-y-4 transition-colors duration-500">
       
@@ -45,27 +45,27 @@
         <input 
           type="text" 
           id="aboutMeTitle" 
-          value="📸 You like it, You Snap it!" 
+          value="🧜‍♀️ ALL ABOUT ME!" 
           oninput="saveUserData()" 
           class="font-black text-lg bg-transparent border-b border-white/40 focus:outline-none w-full"
         />
-        <span class="text-xs bg-white/20 px-2.5 py-1 rounded-full font-bold whitespace-nowrap">Photo Challenge</span>
+        <span class="text-xs bg-white/20 px-2.5 py-1 rounded-full font-bold whitespace-nowrap">Daily Challenge</span>
       </div>
 
       <!-- Editable Challenge Prompts -->
       <div class="space-y-3">
         <div>
-          <label class="text-xs font-bold uppercase tracking-wider block mb-1 opacity-90">Prompt 1</label>
+          <label class="text-xs font-bold uppercase tracking-wider block mb-1 opacity-90">Challenge Prompt 1</label>
           <input 
             type="text" 
             id="aboutMePrompt1" 
-            value="🥰👀 Just a little something that caught my eye. 👀🥰" 
+            value="What is your favorite ocean creature?" 
             oninput="saveUserData()" 
           />
         </div>
 
         <div>
-          <label class="text-xs font-bold uppercase tracking-wider block mb-1 opacity-90">Prompt 2</label>
+          <label class="text-xs font-bold uppercase tracking-wider block mb-1 opacity-90">Challenge Prompt 2</label>
           <input 
             type="text" 
             id="aboutMePrompt2" 
@@ -88,10 +88,12 @@
   </div>
 
   <!-- ========================================================= -->
-  <!-- APPLICATION JAVASCRIPT LOGIC                              -->
+  <!-- FULL APPLICATION JAVASCRIPT LOGIC                         -->
   <!-- ========================================================= -->
   <script>
-    // 1. LocalStorage / Supabase Sync
+    // ---------------------------------------------------------
+    // 1. SUPABASE & LOCAL STORAGE SYNC
+    // ---------------------------------------------------------
     async function saveUserData() {
       const task1Title = document.getElementById('task1Title')?.value || '';
       const aboutMeTitle = document.getElementById('aboutMeTitle')?.value || '';
@@ -106,13 +108,18 @@
         updated_at: new Date().toISOString()
       };
 
+      // 1. Save locally for instant rendering
       localStorage.setItem('userAppState', JSON.stringify(stateData));
 
+      // 2. Sync to Supabase database if client exists
       if (typeof supabase !== 'undefined' && supabase) {
         try {
-          await supabase.from('app_state').upsert([{ id: 1, state: stateData }]);
+          const { error } = await supabase
+            .from('app_state')
+            .upsert([{ id: 1, state: stateData }]);
+          if (error) console.error('Supabase Sync Error:', error);
         } catch (err) {
-          console.error('Supabase Sync Error:', err);
+          console.error('Network/Supabase Error:', err);
         }
       }
     }
@@ -122,7 +129,11 @@
 
       if (typeof supabase !== 'undefined' && supabase) {
         try {
-          const { data } = await supabase.from('app_state').select('state').eq('id', 1).single();
+          const { data } = await supabase
+            .from('app_state')
+            .select('state')
+            .eq('id', 1)
+            .single();
           if (data && data.state) state = data.state;
         } catch (err) {
           console.warn('Falling back to LocalStorage:', err);
@@ -150,11 +161,14 @@
       }
     }
 
-    // 2. Daily Rotating Colors
+    // ---------------------------------------------------------
+    // 2. 24-HOUR ROTATING DAILY COLOR THEMES
+    // ---------------------------------------------------------
     function applyDailyColorTheme() {
       const card = document.getElementById('aboutMeCard');
       if (!card) return;
 
+      // 4 Vibrant ocean & candy color themes
       const themes = [
         { bg: 'bg-purple-600', border: 'border-purple-300', text: 'text-purple-100', inputBg: 'bg-purple-700/50' },
         { bg: 'bg-sky-600', border: 'border-sky-300', text: 'text-sky-100', inputBg: 'bg-sky-700/50' },
@@ -162,13 +176,16 @@
         { bg: 'bg-pink-600', border: 'border-pink-300', text: 'text-pink-100', inputBg: 'bg-pink-700/50' }
       ];
 
+      // Rotate based on day of year (changes automatically every 24 hours)
       const now = new Date();
       const start = new Date(now.getFullYear(), 0, 0);
       const diff = now - start;
-      const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const oneDay = 1000 * 60 * 60 * 24;
+      const dayOfYear = Math.floor(diff / oneDay);
 
       const todayTheme = themes[dayOfYear % themes.length];
 
+      // Apply dynamic color classes
       card.className = `p-5 rounded-2xl border-2 shadow-xl space-y-4 transition-colors duration-500 ${todayTheme.bg} ${todayTheme.border} ${todayTheme.text}`;
 
       const inputs = card.querySelectorAll('input[type="text"]');
@@ -179,9 +196,12 @@
       });
     }
 
-    // 3. Confetti Animation Trigger
+    // ---------------------------------------------------------
+    // 3. FULL CONFETTI (STANDARD CANNONS + MERMAID WATER SPLASH)
+    // ---------------------------------------------------------
     function triggerTaskCompletionConfetti() {
       if (typeof confetti === 'function') {
+        // --- PART A: ORIGINAL COLORFUL CONFETTI CANNONS (LEFT & RIGHT) ---
         confetti({
           particleCount: 45,
           angle: 60,
@@ -198,6 +218,7 @@
           colors: ['#ff71ce', '#01cdfe', '#05ffa1', '#b967ff', '#fffb96']
         });
 
+        // --- PART B: GIANT LEAPING MERMAID & WATER SPLASH BURST (CENTER) ---
         const scalar = 2.8;
         const mermaidShape = confetti.shapeFromText({ text: '🧜‍♀️', scalar });
         const splashShape = confetti.shapeFromText({ text: '💦', scalar: 2.2 });
@@ -212,13 +233,63 @@
           shapes: [mermaidShape, splashShape, waveShape, starShape],
           scalar
         });
+      } else {
+        renderDOMMermaidSplash();
       }
     }
 
-    // Initialize Page
+    // DOM Fallback if CDN fails
+    function renderDOMMermaidSplash() {
+      const overlay = document.createElement('div');
+      overlay.className = 'fixed inset-0 pointer-events-none z-50 flex items-center justify-center overflow-hidden';
+      overlay.innerHTML = `
+        <div class="animate-bounce text-center transform scale-150 transition-all duration-700">
+          <div class="text-9xl filter drop-shadow-2xl">🧜‍♀️</div>
+          <div class="text-5xl mt-2">💦 🌊 ⭐ 💦</div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      setTimeout(() => {
+        overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.remove(), 700);
+      }, 1200);
+    }
+
+    // ---------------------------------------------------------
+    // 4. ATTACH LISTENERS TO ALL TASKS (CHECKBOXES & BUTTONS)
+    // ---------------------------------------------------------
+    function attachTaskEventListeners() {
+      // 1. Attach to all checkboxes in the app
+      const taskCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+      taskCheckboxes.forEach(checkbox => {
+        if (!checkbox.dataset.mermaidBound) {
+          checkbox.dataset.mermaidBound = "true";
+          checkbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+              triggerTaskCompletionConfetti();
+            }
+          });
+        }
+      });
+
+      // 2. Attach to all submit/completion buttons
+      const submitBtns = document.querySelectorAll('.task-submit-btn, button[type="submit"], .complete-task-btn');
+      submitBtns.forEach(btn => {
+        if (!btn.dataset.mermaidBound) {
+          btn.dataset.mermaidBound = "true";
+          btn.addEventListener('click', () => {
+            triggerTaskCompletionConfetti();
+          });
+        }
+      });
+    }
+
+    // Initialize on Page Load
     document.addEventListener('DOMContentLoaded', () => {
       loadUserData();
       applyDailyColorTheme();
+      attachTaskEventListeners();
     });
   </script>
 </body>
