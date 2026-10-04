@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Weekly Learning App</title>
 
-  <!-- 1. TAILWIND CSS CDN (For Styling) -->
+  <!-- 1. TAILWIND CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- 2. REQUIRED CONFETTI ENGINE (Canvas-Confetti CDN) -->
+  <!-- 2. CANVAS CONFETTI CDN -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen p-4 flex flex-col items-center justify-center space-y-6">
@@ -75,49 +75,6 @@
         </div>
       </div>
 
-      <!-- ========================================================= -->
-      <!-- PHOTO CONTAINER WITH MINUS/PLUS STAR (➖⭐ / ➕⭐) RULES  -->
-      <!-- ========================================================= -->
-      <div class="space-y-2 pt-2 border-t border-white/20">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold uppercase tracking-wider opacity-90">Snapped Photo</span>
-          
-          <div class="flex items-center gap-2">
-            <!-- Hidden File Input -->
-            <input 
-              type="file" 
-              id="photoUploadInput" 
-              accept="image/*" 
-              class="hidden" 
-              onchange="handlePhotoUpload(event)" 
-            />
-
-            <!-- Remove Picture Button (➖⭐) -->
-            <button 
-              type="button" 
-              onclick="removePicture()" 
-              title="Remove Picture"
-              class="px-2.5 py-1 text-xs font-bold bg-red-500/80 hover:bg-red-500 text-white rounded-lg transition transform active:scale-95 flex items-center gap-1 cursor-pointer">
-              ➖⭐ Remove
-            </button>
-
-            <!-- Add / Replace Picture Button (➕⭐) -->
-            <button 
-              type="button" 
-              onclick="document.getElementById('photoUploadInput').click()" 
-              title="Add or Replace Picture"
-              class="px-2.5 py-1 text-xs font-bold bg-emerald-500/80 hover:bg-emerald-500 text-white rounded-lg transition transform active:scale-95 flex items-center gap-1 cursor-pointer">
-              ➕⭐ Add Photo
-            </button>
-          </div>
-        </div>
-
-        <!-- Image Preview Area -->
-        <div id="photoPreviewContainer" class="hidden relative rounded-xl overflow-hidden border border-white/30 shadow-md">
-          <img id="photoPreview" src="" alt="Snapped Photo" class="w-full max-h-56 object-cover" />
-        </div>
-      </div>
-
       <!-- Completion Button -->
       <button 
         type="button" 
@@ -131,59 +88,10 @@
   </div>
 
   <!-- ========================================================= -->
-  <!-- FULL APPLICATION JAVASCRIPT LOGIC                         -->
+  <!-- APPLICATION JAVASCRIPT LOGIC                              -->
   <!-- ========================================================= -->
   <script>
-    // ---------------------------------------------------------
-    // 1. PHOTO MANAGEMENT (ADD ➕⭐ & REMOVE ➖⭐)
-    // ---------------------------------------------------------
-    let currentPhotoBase64 = null;
-
-    function handlePhotoUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        currentPhotoBase64 = e.target.result;
-        displayPhoto(currentPhotoBase64);
-        saveUserData();
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function removePicture() {
-      // 1. Reset variable
-      currentPhotoBase64 = null;
-
-      // 2. Clear UI components
-      const previewContainer = document.getElementById('photoPreviewContainer');
-      const previewImg = document.getElementById('photoPreview');
-      const fileInput = document.getElementById('photoUploadInput');
-
-      if (previewImg) previewImg.src = '';
-      if (previewContainer) previewContainer.classList.add('hidden');
-      if (fileInput) fileInput.value = '';
-
-      // 3. Save state with photo explicit null to persist deletion
-      saveUserData();
-    }
-
-    function displayPhoto(base64Data) {
-      const previewContainer = document.getElementById('photoPreviewContainer');
-      const previewImg = document.getElementById('photoPreview');
-
-      if (base64Data && previewImg && previewContainer) {
-        previewImg.src = base64Data;
-        previewContainer.classList.remove('hidden');
-      } else if (previewContainer) {
-        previewContainer.classList.add('hidden');
-      }
-    }
-
-    // ---------------------------------------------------------
-    // 2. SUPABASE & LOCAL STORAGE SYNC
-    // ---------------------------------------------------------
+    // 1. LocalStorage / Supabase Sync
     async function saveUserData() {
       const task1Title = document.getElementById('task1Title')?.value || '';
       const aboutMeTitle = document.getElementById('aboutMeTitle')?.value || '';
@@ -195,22 +103,16 @@
         aboutMeTitle,
         aboutMePrompt1,
         aboutMePrompt2,
-        photoData: currentPhotoBase64, // Explicitly saved as null if removed
         updated_at: new Date().toISOString()
       };
 
-      // Save locally for instant rendering
       localStorage.setItem('userAppState', JSON.stringify(stateData));
 
-      // Sync to Supabase database if client exists
       if (typeof supabase !== 'undefined' && supabase) {
         try {
-          const { error } = await supabase
-            .from('app_state')
-            .upsert([{ id: 1, state: stateData }]);
-          if (error) console.error('Supabase Sync Error:', error);
+          await supabase.from('app_state').upsert([{ id: 1, state: stateData }]);
         } catch (err) {
-          console.error('Network/Supabase Error:', err);
+          console.error('Supabase Sync Error:', err);
         }
       }
     }
@@ -220,11 +122,7 @@
 
       if (typeof supabase !== 'undefined' && supabase) {
         try {
-          const { data } = await supabase
-            .from('app_state')
-            .select('state')
-            .eq('id', 1)
-            .single();
+          const { data } = await supabase.from('app_state').select('state').eq('id', 1).single();
           if (data && data.state) state = data.state;
         } catch (err) {
           console.warn('Falling back to LocalStorage:', err);
@@ -249,20 +147,10 @@
         if (document.getElementById('aboutMePrompt2') && state.aboutMePrompt2) {
           document.getElementById('aboutMePrompt2').value = state.aboutMePrompt2;
         }
-        if (state.photoData) {
-          currentPhotoBase64 = state.photoData;
-          displayPhoto(currentPhotoBase64);
-        } else {
-          // Explicitly clear photo if state has no photoData
-          currentPhotoBase64 = null;
-          displayPhoto(null);
-        }
       }
     }
 
-    // ---------------------------------------------------------
-    // 3. 24-HOUR ROTATING DAILY COLOR THEMES
-    // ---------------------------------------------------------
+    // 2. Daily Rotating Colors
     function applyDailyColorTheme() {
       const card = document.getElementById('aboutMeCard');
       if (!card) return;
@@ -277,8 +165,7 @@
       const now = new Date();
       const start = new Date(now.getFullYear(), 0, 0);
       const diff = now - start;
-      const oneDay = 1000 * 60 * 60 * 24;
-      const dayOfYear = Math.floor(diff / oneDay);
+      const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
 
       const todayTheme = themes[dayOfYear % themes.length];
 
@@ -292,12 +179,9 @@
       });
     }
 
-    // ---------------------------------------------------------
-    // 4. FULL CONFETTI (STANDARD CANNONS + MERMAID WATER SPLASH)
-    // ---------------------------------------------------------
+    // 3. Confetti Animation Trigger
     function triggerTaskCompletionConfetti() {
       if (typeof confetti === 'function') {
-        // Left & Right Colorful Confetti Cannons
         confetti({
           particleCount: 45,
           angle: 60,
@@ -314,9 +198,8 @@
           colors: ['#ff71ce', '#01cdfe', '#05ffa1', '#b967ff', '#fffb96']
         });
 
-        // Center Leaping Mermaid + Splash Emojis
         const scalar = 2.8;
-        const mermaidShape = confetti.shapeFromText({ text: '🧜‍♀️️', scalar });
+        const mermaidShape = confetti.shapeFromText({ text: '🧜‍♀️', scalar });
         const splashShape = confetti.shapeFromText({ text: '💦', scalar: 2.2 });
         const waveShape = confetti.shapeFromText({ text: '🌊', scalar: 2.2 });
         const starShape = confetti.shapeFromText({ text: '⭐', scalar: 2.0 });
@@ -329,61 +212,13 @@
           shapes: [mermaidShape, splashShape, waveShape, starShape],
           scalar
         });
-      } else {
-        renderDOMMermaidSplash();
       }
     }
 
-    // DOM Fallback if CDN fails
-    function renderDOMMermaidSplash() {
-      const overlay = document.createElement('div');
-      overlay.className = 'fixed inset-0 pointer-events-none z-50 flex items-center justify-center overflow-hidden';
-      overlay.innerHTML = `
-        <div class="animate-bounce text-center transform scale-150 transition-all duration-700">
-          <div class="text-9xl filter drop-shadow-2xl">🧜‍♀️</div>
-          <div class="text-5xl mt-2">💦 🌊 ⭐ 💦</div>
-        </div>
-      `;
-      document.body.appendChild(overlay);
-
-      setTimeout(() => {
-        overlay.classList.add('opacity-0');
-        setTimeout(() => overlay.remove(), 700);
-      }, 1200);
-    }
-
-    // ---------------------------------------------------------
-    // 5. ATTACH LISTENERS TO ALL TASKS (CHECKBOXES & BUTTONS)
-    // ---------------------------------------------------------
-    function attachTaskEventListeners() {
-      const taskCheckboxes = document.querySelectorAll('input[type="checkbox"]');
-      taskCheckboxes.forEach(checkbox => {
-        if (!checkbox.dataset.mermaidBound) {
-          checkbox.dataset.mermaidBound = "true";
-          checkbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-              triggerTaskCompletionConfetti();
-            }
-          });
-        }
-      });
-
-      const submitBtns = document.querySelectorAll('.task-submit-btn, button[type="submit"], .complete-task-btn');
-      submitBtns.forEach(btn => {
-        if (!btn.dataset.mermaidBound) {
-          btn.dataset.mermaidBound = "true";
-          btn.addEventListener('click', () => {
-            triggerTaskCompletionConfetti();
-          });
-        }
-      });
-    }
-
-    // Initialize on Page Load
+    // Initialize Page
     document.addEventListener('DOMContentLoaded', () => {
       loadUserData();
       applyDailyColorTheme();
-      attachTaskEventListeners();
     });
   </script>
 </body>
