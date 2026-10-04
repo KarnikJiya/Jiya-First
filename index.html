@@ -1,296 +1,596 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Weekly Learning App</title>
-
-  <!-- 1. TAILWIND CSS CDN (For Styling) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Jiya's Learning Adventure</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- 2. REQUIRED CONFETTI ENGINE (Canvas-Confetti CDN) -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-</head>
-<body class="bg-slate-900 text-white min-h-screen p-4 flex flex-col items-center justify-center space-y-6">
-
-  <div class="w-full max-w-md space-y-6">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Supabase Cloud Sync Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    html, body { overflow-x: hidden; width: 100%; }
+    ::placeholder { color: #d8b4fe; opacity: 1; }
     
-    <!-- ========================================================= -->
-    <!-- WEEKLY LEARNING QUESTION EXAMPLE INPUT                    -->
-    <!-- ========================================================= -->
-    <div class="bg-purple-900/40 p-4 rounded-2xl border border-purple-500/30 space-y-2">
-      <label class="text-xs font-bold text-purple-300 uppercase tracking-wider block">Weekly Question</label>
-      <div class="flex items-center gap-2">
-        <input 
-          type="text" 
-          id="task1Title" 
-          value="Write 3 letter 5 words" 
-          oninput="saveUserData()" 
-          class="w-full font-bold text-white bg-transparent border-b border-purple-400 focus:outline-none py-1"
-        />
-        <input 
-          type="checkbox" 
-          class="w-6 h-6 accent-purple-500 cursor-pointer flex-shrink-0" 
-        />
-      </div>
+    @keyframes floatCharacter {
+      0%, 100% { transform: translateY(0px) rotate(3deg); }
+      50% { transform: translateY(-10px) rotate(-3deg); }
+    }
+    .floating-kid { animation: floatCharacter 4s ease-in-out infinite; }
+
+    @keyframes popRibbon {
+      0% { transform: scale(0.3); opacity: 0; }
+      15% { transform: scale(1.15); opacity: 1; }
+      25% { transform: scale(1.0); opacity: 1; }
+      85% { transform: scale(1.0); opacity: 1; }
+      100% { transform: scale(0.5); opacity: 0; }
+    }
+    .ribbon-pop { 
+      animation: popRibbon 4.0s ease-in-out forwards; 
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-100 min-h-screen font-sans relative pb-12">
+
+  <!-- Celebration Ribbon Overlay Container -->
+  <div id="ribbonOverlay" class="fixed inset-0 pointer-events-none z-50 flex items-center justify-center hidden">
+    <div id="ribbonCard" class="bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 text-white font-black text-xl sm:text-3xl px-8 py-5 rounded-3xl shadow-2xl border-4 border-white text-center transform">
+      <span id="ribbonText">🎗️ Super Learner Ribbon! 🎗️</span>
     </div>
+  </div>
 
-    <!-- ========================================================= -->
-    <!-- EDITABLE "ALL ABOUT ME" CARD                              -->
-    <!-- ========================================================= -->
-    <div id="aboutMeCard" class="p-5 rounded-2xl border-2 shadow-xl space-y-4 transition-colors duration-500">
-      
-      <!-- Card Header -->
-      <div class="flex items-center justify-between gap-2">
-        <input 
-          type="text" 
-          id="aboutMeTitle" 
-          value="🧜‍♀️ ALL ABOUT ME!" 
-          oninput="saveUserData()" 
-          class="font-black text-lg bg-transparent border-b border-white/40 focus:outline-none w-full"
-        />
-        <span class="text-xs bg-white/20 px-2.5 py-1 rounded-full font-bold whitespace-nowrap">Daily Challenge</span>
+  <div class="w-full max-w-4xl mx-auto px-3 py-4 sm:p-6 space-y-5 relative z-10 box-border">
+
+    <!-- Header -->
+    <header class="bg-white/95 rounded-3xl p-4 shadow-lg border-2 sm:border-4 border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3 backdrop-blur-sm">
+      <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+        <button id="avatarBtn" onclick="changeEmoji()" title="Click to change emoji!" class="text-3xl sm:text-4xl bg-indigo-100 hover:bg-indigo-200 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl transition transform active:scale-95 shadow-inner flex items-center justify-center overflow-hidden border-2 border-indigo-300 flex-shrink-0">
+          <span id="avatarDisplay">🌟</span>
+        </button>
+
+        <label for="avatarUpload" class="cursor-pointer bg-amber-400 hover:bg-amber-500 text-amber-950 p-2.5 rounded-2xl shadow-md transition transform active:scale-95 flex items-center justify-center text-lg sm:text-xl border border-amber-300 flex-shrink-0" title="Snap profile selfie">
+          📸
+          <input type="file" id="avatarUpload" accept="image/*" capture="user" class="hidden" onchange="handleAvatarUpload(event)">
+        </label>
+
+        <div class="min-w-0 flex-1">
+          <input type="text" id="heroName" value="Super Jiya's Adventure" onchange="saveUserData()"
+                 class="text-xl sm:text-2xl font-black text-indigo-900 border-b-2 border-dotted border-indigo-200 focus:outline-none focus:border-indigo-600 bg-transparent w-full truncate">
+          <p class="text-gray-500 text-xs sm:text-sm">HQ Dashboard & Learning Journal</p>
+        </div>
       </div>
 
-      <!-- Editable Challenge Prompts -->
+      <div class="flex items-center justify-center gap-2 bg-amber-50 px-4 py-2 sm:py-3 rounded-2xl border border-amber-300 shadow-sm w-full sm:w-auto">
+        <span class="text-2xl sm:text-3xl">⭐</span>
+        <div class="flex items-center gap-2 sm:block">
+          <p class="text-xs font-bold text-amber-700 uppercase tracking-wider">Total Stars:</p>
+          <p id="starCount" class="text-xl sm:text-2xl font-black text-amber-900">0</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Quests Section -->
+    <section class="bg-white/95 rounded-3xl p-4 sm:p-6 shadow-xl border-2 sm:border-4 border-purple-200 space-y-4 relative backdrop-blur-sm">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl sm:text-3xl">🎯</span>
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-gray-800 leading-tight">Weekly Learning Quests</h2>
+            <p class="text-gray-500 text-xs sm:text-sm">Click title to edit prompt • Earn +3 ⭐ per quest!</p>
+          </div>
+        </div>
+      </div>
+
       <div class="space-y-3">
-        <div>
-          <label class="text-xs font-bold uppercase tracking-wider block mb-1 opacity-90">Challenge Prompt 1</label>
-          <input 
-            type="text" 
-            id="aboutMePrompt1" 
-            value="What is your favorite ocean creature?" 
-            oninput="saveUserData()" 
-          />
+        <!-- Task 1 -->
+        <div class="bg-purple-50 p-3.5 rounded-2xl border border-purple-200 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <input type="text" id="task1Title" value="Write 3 letter 5 words" oninput="saveUserData()"
+                   class="font-bold text-gray-800 text-sm sm:text-base bg-transparent border-b border-purple-300 focus:outline-none focus:border-purple-600 w-full">
+            <span class="bg-amber-100 text-amber-900 font-black px-2.5 py-1 rounded-full text-xs flex-shrink-0">+3 ⭐</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="text" id="task1Ans" placeholder="Type answer here..." oninput="saveUserData()"
+                   class="flex-1 bg-white border border-purple-200 rounded-xl px-3 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-400">
+            <button id="task1Btn" onclick="submitTask(1)" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-3 py-2 rounded-xl shadow transition transform active:scale-95">
+              Submit ✨
+            </button>
+          </div>
         </div>
 
-        <div>
-          <label class="text-xs font-bold uppercase tracking-wider block mb-1 opacity-90">Challenge Prompt 2</label>
-          <input 
-            type="text" 
-            id="aboutMePrompt2" 
-            value="Write 3 things you love about the sea!" 
-            oninput="saveUserData()" 
-          />
+        <!-- Task 2 -->
+        <div class="bg-purple-50 p-3.5 rounded-2xl border border-purple-200 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <input type="text" id="task2Title" value="How many Sundays in Jan, March and May?" oninput="saveUserData()"
+                   class="font-bold text-gray-800 text-sm sm:text-base bg-transparent border-b border-purple-300 focus:outline-none focus:border-purple-600 w-full">
+            <span class="bg-amber-100 text-amber-900 font-black px-2.5 py-1 rounded-full text-xs flex-shrink-0">+3 ⭐</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="text" id="task2Ans" placeholder="Type answer here..." oninput="saveUserData()"
+                   class="flex-1 bg-white border border-purple-200 rounded-xl px-3 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-400">
+            <button id="task2Btn" onclick="submitTask(2)" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-3 py-2 rounded-xl shadow transition transform active:scale-95">
+              Submit ✨
+            </button>
+          </div>
+        </div>
+
+        <!-- Task 3 -->
+        <div class="bg-purple-50 p-3.5 rounded-2xl border border-purple-200 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <input type="text" id="task3Title" value="Name 3 animals that stay in water" oninput="saveUserData()"
+                   class="font-bold text-gray-800 text-sm sm:text-base bg-transparent border-b border-purple-300 focus:outline-none focus:border-purple-600 w-full">
+            <span class="bg-amber-100 text-amber-900 font-black px-2.5 py-1 rounded-full text-xs flex-shrink-0">+3 ⭐</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="text" id="task3Ans" placeholder="Type answer here..." oninput="saveUserData()"
+                   class="flex-1 bg-white border border-purple-200 rounded-xl px-3 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-400">
+            <button id="task3Btn" onclick="submitTask(3)" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-3 py-2 rounded-xl shadow transition transform active:scale-95">
+              Submit ✨
+            </button>
+          </div>
         </div>
       </div>
+    </section>
 
-      <!-- Completion Button -->
-      <button 
-        type="button" 
-        onclick="triggerTaskCompletionConfetti(); saveUserData();" 
-        class="task-submit-btn w-full py-3 mt-2 bg-yellow-400 hover:bg-yellow-300 text-purple-950 font-black rounded-xl shadow-lg transition transform active:scale-95 cursor-pointer">
-        ✨ Complete & Splash! 🧜‍♀️
-      </button>
+    <!-- Schoolwork Showcase Section -->
+    <section class="bg-white/95 rounded-3xl p-4 sm:p-6 shadow-xl border-2 sm:border-4 border-pink-200 space-y-4 backdrop-blur-sm">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl sm:text-3xl">📸</span>
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-gray-800 leading-tight">Schoolwork Wins (+1 ⭐)</h2>
+            <p class="text-gray-500 text-xs sm:text-sm">Snap photos of notes, grades, or drawings!</p>
+          </div>
+        </div>
+        
+        <label for="photoUpload" class="w-full sm:w-auto text-center cursor-pointer bg-pink-500 hover:bg-pink-600 text-white font-bold px-4 py-2.5 rounded-2xl shadow-md transition transform active:scale-95 flex items-center justify-center gap-2 text-sm">
+          <span id="uploadBtnText">➕ Snap Schoolwork</span>
+          <input type="file" id="photoUpload" accept="image/*" capture="environment" class="hidden" onchange="handleFileUpload(event)">
+        </label>
+      </div>
 
-    </div>
+      <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1"></div>
+    </section>
+
+    <!-- Profile Section -->
+    <section class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-3xl p-4 sm:p-6 shadow-xl text-white border-2 sm:border-4 border-indigo-300">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl sm:text-3xl">🦸‍♀️</span>
+          <div>
+            <h2 class="text-lg sm:text-xl font-black leading-tight">All About Me!</h2>
+            <p class="text-purple-100 text-xs sm:text-sm">Customize your Hero Profile</p>
+          </div>
+        </div>
+        <span id="selfieBadge" class="bg-amber-400 text-amber-950 font-black text-xs px-3 py-1 rounded-full shadow border border-amber-300">
+          Selfie Quest: 0/3 (+1 ⭐ each)
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 bg-white/10 p-3 sm:p-4 rounded-2xl backdrop-blur-sm border border-white/10">
+        <div>
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-purple-200 mb-1">My Secret Superpower</label>
+          <input type="text" id="superpowerInput" placeholder="e.g., Drawing / Math / Hugs!" oninput="saveUserData()"
+                 class="w-full bg-white/20 border border-purple-200/30 rounded-xl px-3 py-2 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-amber-300 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-purple-200 mb-1">Favorite Color & Hobby</label>
+          <input type="text" id="favoriteInput" placeholder="e.g., Pink & Dancing" oninput="saveUserData()"
+                 class="w-full bg-white/20 border border-purple-200/30 rounded-xl px-3 py-2 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-amber-300 text-sm">
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-purple-200 mb-1">My Story (Bio)</label>
+          <textarea id="bioInput" rows="2" placeholder="Write something fun about yourself here!" oninput="saveUserData()"
+                    class="w-full bg-white/20 border border-purple-200/30 rounded-xl px-3 py-2 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-amber-300 text-sm leading-snug"></textarea>
+        </div>
+      </div>
+    </section>
 
   </div>
 
-  <!-- ========================================================= -->
-  <!-- FULL APPLICATION JAVASCRIPT LOGIC                         -->
-  <!-- ========================================================= -->
   <script>
-    // ---------------------------------------------------------
-    // 1. SUPABASE & LOCAL STORAGE SYNC
-    // ---------------------------------------------------------
-    async function saveUserData() {
-      const task1Title = document.getElementById('task1Title')?.value || '';
-      const aboutMeTitle = document.getElementById('aboutMeTitle')?.value || '';
-      const aboutMePrompt1 = document.getElementById('aboutMePrompt1')?.value || '';
-      const aboutMePrompt2 = document.getElementById('aboutMePrompt2')?.value || '';
-
-      const stateData = {
-        task1Title,
-        aboutMeTitle,
-        aboutMePrompt1,
-        aboutMePrompt2,
-        updated_at: new Date().toISOString()
-      };
-
-      // 1. Save locally for instant rendering
-      localStorage.setItem('userAppState', JSON.stringify(stateData));
-
-      // 2. Sync to Supabase database if client exists
-      if (typeof supabase !== 'undefined' && supabase) {
-        try {
-          const { error } = await supabase
-            .from('app_state')
-            .upsert([{ id: 1, state: stateData }]);
-          if (error) console.error('Supabase Sync Error:', error);
-        } catch (err) {
-          console.error('Network/Supabase Error:', err);
-        }
+    // --- SUPABASE CONFIGURATION ---
+    const SUPABASE_URL = 'https://knkdpgeqsaqrydkdzlza.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtua2RwZ2Vxc2Fxcnlka2R6bHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwNTE3OTYsImV4cCI6MjEwNjYyNzc5Nn0.rRfkPsMoJEGs-boWFc0eqTeaB1JgN6mTx43TWEZCU9c';
+    
+    let supabaseClient = null;
+    if (typeof supabase !== 'undefined' && SUPABASE_URL) {
+      try {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      } catch (e) {
+        console.warn('Supabase initialization error:', e);
       }
     }
 
-    async function loadUserData() {
-      let state = null;
+    let stars = 0;
+    let selfieCount = 0;
+    const emojis = ['🌟', '🦸‍♀️', '🎨', '🚀', '🦄', '🦁', '🧜‍♀️️', '⚡'];
+    let currentEmojiIndex = 0;
+    let localGallery = [];
 
-      if (typeof supabase !== 'undefined' && supabase) {
-        try {
-          const { data } = await supabase
-            .from('app_state')
-            .select('state')
-            .eq('id', 1)
-            .single();
-          if (data && data.state) state = data.state;
-        } catch (err) {
-          console.warn('Falling back to LocalStorage:', err);
-        }
-      }
+    const ribbonMessages = [
+      "🎗️ Super Learner Ribbon! 🎗️",
+      "🔥 Streak Master Badge! 🔥",
+      "⭐ Genius Star Unlocked! ⭐",
+      "🏆 Superstar Champion! 🏆",
+      "🎉 Amazing Work Jiya! 🎉"
+    ];
 
-      if (!state) {
-        const local = localStorage.getItem('userAppState');
-        if (local) state = JSON.parse(local);
-      }
-
-      if (state) {
-        if (document.getElementById('task1Title') && state.task1Title) {
-          document.getElementById('task1Title').value = state.task1Title;
-        }
-        if (document.getElementById('aboutMeTitle') && state.aboutMeTitle) {
-          document.getElementById('aboutMeTitle').value = state.aboutMeTitle;
-        }
-        if (document.getElementById('aboutMePrompt1') && state.aboutMePrompt1) {
-          document.getElementById('aboutMePrompt1').value = state.aboutMePrompt1;
-        }
-        if (document.getElementById('aboutMePrompt2') && state.aboutMePrompt2) {
-          document.getElementById('aboutMePrompt2').value = state.aboutMePrompt2;
-        }
-      }
-    }
-
-    // ---------------------------------------------------------
-    // 2. 24-HOUR ROTATING DAILY COLOR THEMES
-    // ---------------------------------------------------------
-    function applyDailyColorTheme() {
-      const card = document.getElementById('aboutMeCard');
-      if (!card) return;
-
-      // 4 Vibrant ocean & candy color themes
-      const themes = [
-        { bg: 'bg-purple-600', border: 'border-purple-300', text: 'text-purple-100', inputBg: 'bg-purple-700/50' },
-        { bg: 'bg-sky-600', border: 'border-sky-300', text: 'text-sky-100', inputBg: 'bg-sky-700/50' },
-        { bg: 'bg-teal-600', border: 'border-teal-300', text: 'text-teal-100', inputBg: 'bg-teal-700/50' },
-        { bg: 'bg-pink-600', border: 'border-pink-300', text: 'text-pink-100', inputBg: 'bg-pink-700/50' }
-      ];
-
-      // Rotate based on day of year (changes automatically every 24 hours)
-      const now = new Date();
-      const start = new Date(now.getFullYear(), 0, 0);
-      const diff = now - start;
-      const oneDay = 1000 * 60 * 60 * 24;
-      const dayOfYear = Math.floor(diff / oneDay);
-
-      const todayTheme = themes[dayOfYear % themes.length];
-
-      // Apply dynamic color classes
-      card.className = `p-5 rounded-2xl border-2 shadow-xl space-y-4 transition-colors duration-500 ${todayTheme.bg} ${todayTheme.border} ${todayTheme.text}`;
-
-      const inputs = card.querySelectorAll('input[type="text"]');
-      inputs.forEach(input => {
-        if (input.id !== 'aboutMeTitle') {
-          input.className = `w-full font-bold px-3 py-2 rounded-lg text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/80 ${todayTheme.inputBg}`;
-        }
+    function readFileAsDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
     }
 
-    // ---------------------------------------------------------
-    // 3. FULL CONFETTI (STANDARD CANNONS + MERMAID WATER SPLASH)
-    // ---------------------------------------------------------
-    function triggerTaskCompletionConfetti() {
-      if (typeof confetti === 'function') {
-        // --- PART A: ORIGINAL COLORFUL CONFETTI CANNONS (LEFT & RIGHT) ---
-        confetti({
-          particleCount: 45,
-          angle: 60,
-          spread: 60,
-          origin: { x: 0.1, y: 0.7 },
-          colors: ['#ff71ce', '#01cdfe', '#05ffa1', '#b967ff', '#fffb96']
-        });
-
-        confetti({
-          particleCount: 45,
-          angle: 120,
-          spread: 60,
-          origin: { x: 0.9, y: 0.7 },
-          colors: ['#ff71ce', '#01cdfe', '#05ffa1', '#b967ff', '#fffb96']
-        });
-
-        // --- PART B: GIANT LEAPING MERMAID & WATER SPLASH BURST (CENTER) ---
-        const scalar = 2.8;
-        const mermaidShape = confetti.shapeFromText({ text: '🧜‍♀️', scalar });
-        const splashShape = confetti.shapeFromText({ text: '💦', scalar: 2.2 });
-        const waveShape = confetti.shapeFromText({ text: '🌊', scalar: 2.2 });
-        const starShape = confetti.shapeFromText({ text: '⭐', scalar: 2.0 });
-
-        confetti({
-          particleCount: 22,
-          spread: 110,
-          startVelocity: 48,
-          origin: { x: 0.5, y: 0.65 },
-          shapes: [mermaidShape, splashShape, waveShape, starShape],
-          scalar
-        });
-      } else {
-        renderDOMMermaidSplash();
-      }
-    }
-
-    // DOM Fallback if CDN fails
-    function renderDOMMermaidSplash() {
-      const overlay = document.createElement('div');
-      overlay.className = 'fixed inset-0 pointer-events-none z-50 flex items-center justify-center overflow-hidden';
-      overlay.innerHTML = `
-        <div class="animate-bounce text-center transform scale-150 transition-all duration-700">
-          <div class="text-9xl filter drop-shadow-2xl">🧜‍♀️</div>
-          <div class="text-5xl mt-2">💦 🌊 ⭐ 💦</div>
-        </div>
-      `;
-      document.body.appendChild(overlay);
-
-      setTimeout(() => {
-        overlay.classList.add('opacity-0');
-        setTimeout(() => overlay.remove(), 700);
-      }, 1200);
-    }
-
-    // ---------------------------------------------------------
-    // 4. ATTACH LISTENERS TO ALL TASKS (CHECKBOXES & BUTTONS)
-    // ---------------------------------------------------------
-    function attachTaskEventListeners() {
-      // 1. Attach to all checkboxes in the app
-      const taskCheckboxes = document.querySelectorAll('input[type="checkbox"]');
-      taskCheckboxes.forEach(checkbox => {
-        if (!checkbox.dataset.mermaidBound) {
-          checkbox.dataset.mermaidBound = "true";
-          checkbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-              triggerTaskCompletionConfetti();
-            }
-          });
-        }
-      });
-
-      // 2. Attach to all submit/completion buttons
-      const submitBtns = document.querySelectorAll('.task-submit-btn, button[type="submit"], .complete-task-btn');
-      submitBtns.forEach(btn => {
-        if (!btn.dataset.mermaidBound) {
-          btn.dataset.mermaidBound = "true";
-          btn.addEventListener('click', () => {
-            triggerTaskCompletionConfetti();
-          });
-        }
-      });
-    }
-
-    // Initialize on Page Load
-    document.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', () => {
       loadUserData();
-      applyDailyColorTheme();
-      attachTaskEventListeners();
+      loadPhotosFromCloud();
+      loadStateFromSupabase();
     });
+
+    async function loadStateFromSupabase() {
+      if (!supabaseClient) return;
+      try {
+        const { data, error } = await supabaseClient
+          .from('app_state')
+          .select('data')
+          .eq('id', 'jiya_dashboard')
+          .single();
+
+        if (!error && data && data.data) {
+          const cloudState = data.data;
+          stars = cloudState.stars ?? stars;
+          selfieCount = cloudState.selfieCount ?? selfieCount;
+          document.getElementById('starCount').innerText = stars;
+          updateSelfieBadge();
+
+          if (cloudState.heroName) document.getElementById('heroName').value = cloudState.heroName;
+          if (cloudState.superpower) document.getElementById('superpowerInput').value = cloudState.superpower;
+          if (cloudState.favorite) document.getElementById('favoriteInput').value = cloudState.favorite;
+          if (cloudState.bio) document.getElementById('bioInput').value = cloudState.bio;
+          if (cloudState.profileAvatar) showAvatarPhoto(cloudState.profileAvatar);
+
+          if (cloudState.tasks) {
+            for (let i = 1; i <= 3; i++) {
+              if (cloudState.tasks[i]) {
+                if (cloudState.tasks[i].title) document.getElementById(`task${i}Title`).value = cloudState.tasks[i].title;
+                if (cloudState.tasks[i].ans) document.getElementById(`task${i}Ans`).value = cloudState.tasks[i].ans;
+                if (cloudState.tasks[i].done) markTaskDoneUI(i);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase state load error:', err);
+      }
+    }
+
+    async function saveStateToSupabase() {
+      if (!supabaseClient) return;
+      try {
+        const statePayload = {
+          stars: stars,
+          selfieCount: selfieCount,
+          heroName: document.getElementById('heroName').value,
+          superpower: document.getElementById('superpowerInput').value,
+          favorite: document.getElementById('favoriteInput').value,
+          bio: document.getElementById('bioInput').value,
+          profileAvatar: localStorage.getItem('jiya_profile_avatar') || null,
+          tasks: {
+            1: { title: document.getElementById('task1Title').value, ans: document.getElementById('task1Ans').value, done: localStorage.getItem('jiya_task_1_done') === 'true' },
+            2: { title: document.getElementById('task2Title').value, ans: document.getElementById('task2Ans').value, done: localStorage.getItem('jiya_task_2_done') === 'true' },
+            3: { title: document.getElementById('task3Title').value, ans: document.getElementById('task3Ans').value, done: localStorage.getItem('jiya_task_3_done') === 'true' }
+          }
+        };
+
+        await supabaseClient
+          .from('app_state')
+          .upsert({ id: 'jiya_dashboard', data: statePayload, updated_at: new Date() });
+      } catch (err) {
+        console.warn('Supabase state sync error:', err);
+      }
+    }
+
+    function loadUserData() {
+      stars = parseInt(localStorage.getItem('jiya_stars') || '0', 10);
+      selfieCount = parseInt(localStorage.getItem('jiya_selfie_count') || '0', 10);
+      document.getElementById('starCount').innerText = stars;
+      updateSelfieBadge();
+
+      if (localStorage.getItem('jiya_hero_name')) document.getElementById('heroName').value = localStorage.getItem('jiya_hero_name');
+      if (localStorage.getItem('jiya_superpower')) document.getElementById('superpowerInput').value = localStorage.getItem('jiya_superpower');
+      if (localStorage.getItem('jiya_favorite')) document.getElementById('favoriteInput').value = localStorage.getItem('jiya_favorite');
+      if (localStorage.getItem('jiya_bio')) document.getElementById('bioInput').value = localStorage.getItem('jiya_bio');
+
+      for (let i = 1; i <= 3; i++) {
+        if (localStorage.getItem(`jiya_task_${i}_title`)) document.getElementById(`task${i}Title`).value = localStorage.getItem(`jiya_task_${i}_title`);
+        if (localStorage.getItem(`jiya_task_${i}_ans`)) document.getElementById(`task${i}Ans`).value = localStorage.getItem(`jiya_task_${i}_ans`);
+        if (localStorage.getItem(`jiya_task_${i}_done`) === 'true') markTaskDoneUI(i);
+      }
+
+      const savedAvatar = localStorage.getItem('jiya_profile_avatar');
+      if (savedAvatar) showAvatarPhoto(savedAvatar);
+    }
+
+    function saveUserData() {
+      localStorage.setItem('jiya_stars', stars);
+      localStorage.setItem('jiya_selfie_count', selfieCount);
+      localStorage.setItem('jiya_hero_name', document.getElementById('heroName').value);
+      localStorage.setItem('jiya_superpower', document.getElementById('superpowerInput').value);
+      localStorage.setItem('jiya_favorite', document.getElementById('favoriteInput').value);
+      localStorage.setItem('jiya_bio', document.getElementById('bioInput').value);
+
+      for (let i = 1; i <= 3; i++) {
+        localStorage.setItem(`jiya_task_${i}_title`, document.getElementById(`task${i}Title`).value);
+        localStorage.setItem(`jiya_task_${i}_ans`, document.getElementById(`task${i}Ans`).value);
+      }
+
+      saveStateToSupabase();
+    }
+
+    function addStars(num) {
+      stars += num;
+      document.getElementById('starCount').innerText = stars;
+      saveUserData();
+    }
+
+    // --- ENHANCED CELEBRATION (BIGGER, LONGER CONFETTI) ---
+    function triggerCelebration(msg) {
+      if (typeof confetti === 'function') {
+        // Burst 1: Initial massive explosion from center
+        confetti({
+          particleCount: 120,
+          spread: 100,
+          startVelocity: 45,
+          scalar: 1.4, // Bigger confetti pieces!
+          origin: { y: 0.5 }
+        });
+
+        // Burst 2: Side cannons firing inward after 400ms
+        setTimeout(() => {
+          confetti({
+            particleCount: 80,
+            angle: 60,
+            spread: 80,
+            startVelocity: 50,
+            scalar: 1.3,
+            origin: { x: 0, y: 0.6 }
+          });
+          confetti({
+            particleCount: 80,
+            angle: 120,
+            spread: 80,
+            startVelocity: 50,
+            scalar: 1.3,
+            origin: { x: 1, y: 0.6 }
+          });
+        }, 400);
+
+        // Burst 3: Super star rain shower after 1.2s
+        setTimeout(() => {
+          confetti({
+            particleCount: 150,
+            spread: 120,
+            startVelocity: 35,
+            ticks: 300, // Keeps particles falling longer
+            scalar: 1.5, // Extra large pieces
+            origin: { y: 0.2 }
+          });
+        }, 1200);
+
+        // Burst 4: Final celebration wave at 2.2s
+        setTimeout(() => {
+          confetti({
+            particleCount: 90,
+            spread: 90,
+            startVelocity: 40,
+            scalar: 1.3,
+            origin: { y: 0.5 }
+          });
+        }, 2200);
+      }
+
+      // Display floating ribbon overlay
+      const overlay = document.getElementById('ribbonOverlay');
+      const ribbonText = document.getElementById('ribbonText');
+      ribbonText.innerText = msg || ribbonMessages[Math.floor(Math.random() * ribbonMessages.length)];
+      
+      overlay.classList.remove('hidden');
+      overlay.classList.add('ribbon-pop');
+
+      // Extended timer (4 seconds total duration)
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('ribbon-pop');
+      }, 4000);
+    }
+
+    function changeEmoji() {
+      localStorage.removeItem('jiya_profile_avatar');
+      currentEmojiIndex = (currentEmojiIndex + 1) % emojis.length;
+      document.getElementById('avatarDisplay').innerHTML = emojis[currentEmojiIndex];
+      saveUserData();
+    }
+
+    function updateSelfieBadge() {
+      document.getElementById('selfieBadge').innerText = `Selfie Quest: ${Math.min(selfieCount, 3)}/3 (+1 ⭐ each)`;
+    }
+
+    async function handleAvatarUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const display = document.getElementById('avatarDisplay');
+      display.innerHTML = `<span class="text-xs font-bold text-indigo-600">⏳...</span>`;
+
+      try {
+        let photoUrl = null;
+
+        if (supabaseClient) {
+          const fileName = `avatar_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+          const { data, error } = await supabaseClient.storage.from('schoolwork-photos').upload(fileName, file);
+          if (!error) {
+            const { data: urlData } = supabaseClient.storage.from('schoolwork-photos').getPublicUrl(fileName);
+            photoUrl = urlData.publicUrl;
+          }
+        }
+
+        if (!photoUrl) photoUrl = await readFileAsDataURL(file);
+
+        localStorage.setItem('jiya_profile_avatar', photoUrl);
+        showAvatarPhoto(photoUrl);
+
+        selfieCount++;
+        if (selfieCount <= 3) addStars(1);
+        else saveUserData();
+
+        updateSelfieBadge();
+        triggerCelebration("📸 Selfie Star Awarded! 🌟");
+
+      } catch (err) {
+        console.error('Avatar upload error:', err);
+        display.innerHTML = emojis[currentEmojiIndex];
+      }
+    }
+
+    function showAvatarPhoto(url) {
+      document.getElementById('avatarDisplay').innerHTML = `<img src="${url}" class="w-full h-full object-cover rounded-2xl" alt="Profile Selfie" />`;
+    }
+
+    function submitTask(taskNum) {
+      const ansInput = document.getElementById(`task${taskNum}Ans`);
+      if (!ansInput.value.trim()) {
+        alert("Please write your answer first!");
+        return;
+      }
+
+      addStars(3);
+      localStorage.setItem(`jiya_task_${taskNum}_done`, 'true');
+      markTaskDoneUI(taskNum);
+      saveUserData();
+      triggerCelebration(`🎯 Task ${taskNum} Complete! +3 ⭐`);
+    }
+
+    function markTaskDoneUI(taskNum) {
+      const btn = document.getElementById(`task${taskNum}Btn`);
+      btn.innerText = "Completed! ✅";
+      btn.className = "bg-green-600 text-white font-bold text-xs px-3 py-2 rounded-xl shadow cursor-default";
+      btn.onclick = null;
+    }
+
+    async function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const btnText = document.getElementById('uploadBtnText');
+      btnText.innerText = '⏳ Uploading...';
+
+      try {
+        let photoUrl = null;
+        const photoId = `photo_${Date.now()}`;
+
+        if (supabaseClient) {
+          const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+          const { data, error } = await supabaseClient.storage.from('schoolwork-photos').upload(fileName, file);
+          if (!error) {
+            const { data: urlData } = supabaseClient.storage.from('schoolwork-photos').getPublicUrl(fileName);
+            photoUrl = urlData.publicUrl;
+          }
+        }
+
+        if (!photoUrl) photoUrl = await readFileAsDataURL(file);
+
+        localGallery = JSON.parse(localStorage.getItem('jiya_local_gallery') || '[]');
+        localGallery.unshift({ id: photoId, url: photoUrl, name: file.name });
+        localStorage.setItem('jiya_local_gallery', JSON.stringify(localGallery.slice(0, 30)));
+
+        renderPhotoCard(photoId, photoUrl, file.name);
+        addStars(1);
+        triggerCelebration("📝 Schoolwork Saved! +1 ⭐");
+
+      } catch (err) {
+        console.error('File upload error:', err);
+        alert('Could not process photo upload. Please try again.');
+      } finally {
+        btnText.innerText = '➕ Snap Schoolwork';
+      }
+    }
+
+    function renderPhotoCard(id, url, title) {
+      const gallery = document.getElementById('gallery');
+      if (document.getElementById(id)) return;
+
+      const newCard = document.createElement('div');
+      newCard.id = id;
+      newCard.className = 'bg-pink-100/80 rounded-2xl p-2 border border-pink-200 flex flex-col justify-between shadow-sm relative overflow-hidden';
+      
+      const catEmoji = ['🖼', '📝', '✨', '🖍'][Math.floor(Math.random() * 4)];
+
+      newCard.innerHTML = `
+        <button onclick="deletePhoto('${id}')" title="Delete Photo" class="absolute top-1.5 right-1.5 z-20 bg-red-500 hover:bg-red-600 text-white font-black w-6 h-6 rounded-full flex items-center justify-center text-xs shadow">
+          ✕
+        </button>
+        <div class="h-28 sm:h-36 bg-pink-50 rounded-xl mb-1.5 flex items-center justify-center overflow-hidden border border-pink-100 relative">
+          <img src="${url}" class="w-full h-full object-cover rounded-xl" />
+          <span class="absolute bottom-1 left-1 text-base">${catEmoji}</span>
+        </div>
+        <p class="font-bold text-gray-800 text-xs truncate">${title.substring(0, 12)}...</p>
+        <p class="text-[10px] text-gray-400 mt-0.5">Saved Journal Entry ☁️</p>
+      `;
+      gallery.prepend(newCard);
+    }
+
+    async function deletePhoto(id) {
+      if (confirm("Do you want to remove this photo?")) {
+        const card = document.getElementById(id);
+        if (card) card.remove();
+
+        localGallery = JSON.parse(localStorage.getItem('jiya_local_gallery') || '[]');
+        localGallery = localGallery.filter(item => item.id !== id);
+        localStorage.setItem('jiya_local_gallery', JSON.stringify(localGallery));
+
+        if (supabaseClient && id.startsWith('cloud_')) {
+          const fileName = id.replace('cloud_', '');
+          try {
+            await supabaseClient.storage.from('schoolwork-photos').remove([fileName]);
+          } catch (e) {
+            console.warn('Cloud photo deletion failed:', e);
+          }
+        }
+      }
+    }
+
+    async function loadPhotosFromCloud() {
+      let loadedFromCloud = false;
+
+      if (supabaseClient) {
+        try {
+          const { data, error } = await supabaseClient.storage.from('schoolwork-photos').list('', { sortBy: { column: 'created_at', order: 'desc' } });
+          if (!error && data && data.length > 0) {
+            data.forEach(file => {
+              if (file.name === '.emptyFolderPlaceholder' || file.name.startsWith('avatar_')) return;
+              const { data: urlData } = supabaseClient.storage.from('schoolwork-photos').getPublicUrl(file.name);
+              renderPhotoCard(`cloud_${file.name}`, urlData.publicUrl, file.name);
+            });
+            loadedFromCloud = true;
+          }
+        } catch (e) {
+          console.warn('Cloud gallery load error:', e);
+        }
+      }
+
+      if (!loadedFromCloud) {
+        localGallery = JSON.parse(localStorage.getItem('jiya_local_gallery') || '[]');
+        localGallery.forEach(item => {
+          renderPhotoCard(item.id || `local_${Math.random()}`, item.url, item.name);
+        });
+      }
+    }
   </script>
 </body>
 </html>
