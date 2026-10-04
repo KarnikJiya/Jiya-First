@@ -51,7 +51,7 @@
         <!-- Separate Camera Button for Profile Photo Upload -->
         <label for="avatarUpload" class="cursor-pointer bg-amber-400 hover:bg-amber-500 text-amber-950 p-2.5 rounded-2xl shadow-md transition transform active:scale-95 flex items-center justify-center text-lg sm:text-xl border border-amber-300 flex-shrink-0" title="Snap profile picture">
           📸
-          <input type="file" id="avatarUpload" accept="image/*;capture=camera" capture="camera" class="hidden" onchange="handleAvatarUpload(event)">
+          <input type="file" id="avatarUpload" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
         </label>
 
         <div class="min-w-0 flex-1">
@@ -121,7 +121,7 @@
         
         <label for="photoUpload" class="w-full sm:w-auto text-center cursor-pointer bg-pink-500 hover:bg-pink-600 text-white font-bold px-4 py-2.5 rounded-2xl shadow-md transition transform active:scale-95 flex items-center justify-center gap-2 text-sm">
           <span id="uploadBtnText">➕ Snap Photo</span>
-          <input type="file" id="photoUpload" accept="image/*;capture=camera" capture="camera" class="hidden" onchange="handleFileUpload(event)">
+          <input type="file" id="photoUpload" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
         </label>
       </div>
 
@@ -176,11 +176,29 @@
     // --- SUPABASE CONFIGURATION ---
     const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_BHP8dx_Lg1I8Ad1wZ-ZF8A_LxNZ77tJ';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    let supabaseClient = null;
+    if (typeof supabase !== 'undefined' && SUPABASE_URL && !SUPABASE_URL.includes('YOUR_SUPABASE_URL_HERE')) {
+      try {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      } catch (e) {
+        console.warn('Supabase initialization bypassed:', e);
+      }
+    }
 
     let stars = 0;
-    const emojis = ['🌟', '🦸‍♀️', '🎨', '🚀', '🦄', '🦁', '🧜‍♀️️', '⚡'];
+    const emojis = ['🌟', '🦸‍♀️', '🎨', '🚀', '🦄', '🦁', '🧜‍♀️', '⚡'];
     let currentEmojiIndex = 0;
+
+    // Convert file to Base64 data URL for reliable local rendering
+    function readFileAsDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
 
     // Load existing profile avatar & photo gallery on page launch
     window.addEventListener('DOMContentLoaded', () => {
@@ -195,10 +213,11 @@
     function changeEmoji() {
       localStorage.removeItem('jiya_profile_avatar');
       currentEmojiIndex = (currentEmojiIndex + 1) % emojis.length;
-      document.getElementById('avatarDisplay').innerText = emojis[currentEmojiIndex];
+      const avatarDisplay = document.getElementById('avatarDisplay');
+      avatarDisplay.innerHTML = emojis[currentEmojiIndex];
     }
 
-    // Upload child's profile photo to Supabase
+    // Upload profile photo
     async function handleAvatarUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -206,25 +225,36 @@
       const display = document.getElementById('avatarDisplay');
       display.innerHTML = `<span class="text-xs font-bold text-indigo-600">⏳...</span>`;
 
-      const fileName = `profile_avatar_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+      try {
+        let photoUrl = null;
 
-      const { data, error } = await supabaseClient.storage
-        .from('schoolwork-photos')
-        .upload(fileName, file);
+        if (supabaseClient) {
+          const fileName = `profile_avatar_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+          const { data, error } = await supabaseClient.storage
+            .from('schoolwork-photos')
+            .upload(fileName, file);
 
-      if (error) {
-        alert('Avatar upload failed: ' + error.message);
-        display.innerText = emojis[currentEmojiIndex];
-        return;
+          if (!error) {
+            const { data: urlData } = supabaseClient.storage
+              .from('schoolwork-photos')
+              .getPublicUrl(fileName);
+            photoUrl = urlData.publicUrl;
+          }
+        }
+
+        if (!photoUrl) {
+          photoUrl = await readFileAsDataURL(file);
+        }
+
+        localStorage.setItem('jiya_profile_avatar', photoUrl);
+        showAvatarPhoto(photoUrl);
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 70, spread: 60, origin: { y: 0.3 } });
+        }
+      } catch (err) {
+        console.error('Avatar upload error:', err);
+        display.innerHTML = emojis[currentEmojiIndex];
       }
-
-      const { data: urlData } = supabaseClient.storage
-        .from('schoolwork-photos')
-        .getPublicUrl(fileName);
-
-      localStorage.setItem('jiya_profile_avatar', urlData.publicUrl);
-      showAvatarPhoto(urlData.publicUrl);
-      confetti({ particleCount: 70, spread: 60, origin: { y: 0.3 } });
     }
 
     // Render image in avatar container
@@ -237,14 +267,16 @@
       if (checkbox.checked) {
         stars += starValue;
         document.getElementById('starCount').innerText = stars;
-        confetti({ particleCount: 80, spread: 60, origin: { y: 0.8 } });
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 80, spread: 60, origin: { y: 0.8 } });
+        }
       } else {
         stars -= starValue;
         document.getElementById('starCount').innerText = stars;
       }
     }
 
-    // Handle schoolwork photos upload
+    // Upload schoolwork photo
     async function handleFileUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -252,28 +284,45 @@
       const btnText = document.getElementById('uploadBtnText');
       btnText.innerText = '⏳ Uploading...';
 
-      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+      try {
+        let photoUrl = null;
 
-      const { data, error } = await supabaseClient.storage
-        .from('schoolwork-photos')
-        .upload(fileName, file);
+        if (supabaseClient) {
+          const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+          const { data, error } = await supabaseClient.storage
+            .from('schoolwork-photos')
+            .upload(fileName, file);
 
-      if (error) {
-        alert('Upload failed: ' + error.message);
+          if (!error) {
+            const { data: urlData } = supabaseClient.storage
+              .from('schoolwork-photos')
+              .getPublicUrl(fileName);
+            photoUrl = urlData.publicUrl;
+          }
+        }
+
+        if (!photoUrl) {
+          photoUrl = await readFileAsDataURL(file);
+          const localGallery = JSON.parse(localStorage.getItem('jiya_local_gallery') || '[]');
+          localGallery.unshift({ url: photoUrl, name: file.name });
+          localStorage.setItem('jiya_local_gallery', JSON.stringify(localGallery.slice(0, 20)));
+        }
+
+        renderPhotoCard(photoUrl, file.name);
+
+        // Award star & update UI
+        stars += 1;
+        document.getElementById('starCount').innerText = stars;
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 60, spread: 50, origin: { y: 0.7 } });
+        }
+      } catch (err) {
+        console.error('File upload error:', err);
+        alert('Could not process photo upload. Please try again.');
+      } finally {
+        // ALWAYS reset button text regardless of network result
         btnText.innerText = '➕ Snap Photo';
-        return;
       }
-
-      const { data: urlData } = supabaseClient.storage
-        .from('schoolwork-photos')
-        .getPublicUrl(fileName);
-
-      renderPhotoCard(urlData.publicUrl, file.name);
-
-      btnText.innerText = '➕ Snap Photo';
-      stars += 1;
-      document.getElementById('starCount').innerText = stars;
-      confetti({ particleCount: 60, spread: 50, origin: { y: 0.7 } });
     }
 
     function renderPhotoCard(url, title) {
@@ -289,26 +338,42 @@
           <span class="absolute top-1 right-1 text-lg">${catEmoji}</span>
         </div>
         <p class="font-bold text-gray-800 text-xs truncate">${title.substring(0, 12)}...</p>
-        <p class="text-[10px] text-gray-400 mt-0.5">Saved in Cloud ☁️</p>
+        <p class="text-[10px] text-gray-400 mt-0.5">Saved Journal Entry ☁️</p>
       `;
       gallery.prepend(newCard);
     }
 
     async function loadPhotosFromCloud() {
-      const { data, error } = await supabaseClient.storage
-        .from('schoolwork-photos')
-        .list('', { sortBy: { column: 'created_at', order: 'desc' } });
+      let loadedFromCloud = false;
 
-      if (error || !data) return;
+      if (supabaseClient) {
+        try {
+          const { data, error } = await supabaseClient.storage
+            .from('schoolwork-photos')
+            .list('', { sortBy: { column: 'created_at', order: 'desc' } });
 
-      data.forEach(file => {
-        if (file.name === '.emptyFolderPlaceholder') return;
-        const { data: urlData } = supabaseClient.storage
-          .from('schoolwork-photos')
-          .getPublicUrl(file.name);
-        
-        renderPhotoCard(urlData.publicUrl, file.name);
-      });
+          if (!error && data && data.length > 0) {
+            data.forEach(file => {
+              if (file.name === '.emptyFolderPlaceholder') return;
+              const { data: urlData } = supabaseClient.storage
+                .from('schoolwork-photos')
+                .getPublicUrl(file.name);
+              
+              renderPhotoCard(urlData.publicUrl, file.name);
+            });
+            loadedFromCloud = true;
+          }
+        } catch (e) {
+          console.warn('Cloud gallery load bypassed:', e);
+        }
+      }
+
+      if (!loadedFromCloud) {
+        const localGallery = JSON.parse(localStorage.getItem('jiya_local_gallery') || '[]');
+        localGallery.forEach(item => {
+          renderPhotoCard(item.url, item.name);
+        });
+      }
     }
   </script>
 </body>
