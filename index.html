@@ -6,12 +6,11 @@
   <title>Jiya's Learning Adventure</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <!-- Supabase Cloud Sync Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     html, body { overflow-x: hidden; width: 100%; transition: background 1s ease-in-out; }
     ::placeholder { color: #d8b4fe; opacity: 0.8; }
-    
+
     @keyframes floatCharacter {
       0%, 100% { transform: translateY(0px) rotate(3deg); }
       50% { transform: translateY(-10px) rotate(-3deg); }
@@ -25,32 +24,27 @@
       85% { transform: scale(1.0); opacity: 1; }
       100% { transform: scale(0.5); opacity: 0; }
     }
-    .ribbon-pop { 
-      animation: popRibbon 4.0s ease-in-out forwards; 
-    }
+    .ribbon-pop { animation: popRibbon 4.0s ease-in-out forwards; }
 
-    /* Mermaid Splash Animation */
     @keyframes mermaidJump {
       0% { transform: translateY(120%) scale(0.5) rotate(-15deg); opacity: 0; }
       40% { transform: translateY(-20%) scale(1.2) rotate(5deg); opacity: 1; }
       70% { transform: translateY(-10%) scale(1) rotate(0deg); opacity: 1; }
       100% { transform: translateY(120%) scale(0.8) rotate(15deg); opacity: 0; }
     }
-    .mermaid-active {
-      animation: mermaidJump 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-    }
+    .mermaid-active { animation: mermaidJump 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
   </style>
 </head>
 <body id="appBody" class="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-100 min-h-screen font-sans relative pb-12">
 
-  <!-- Mermaid Jump Container -->
+  <!-- Mermaid Jump Overlay -->
   <div id="mermaidContainer" class="fixed inset-0 pointer-events-none z-50 flex items-end justify-center hidden overflow-hidden">
     <div id="mermaidGraphic" class="text-7xl sm:text-9xl transform translate-y-full filter drop-shadow-2xl mb-8">
       🧜‍♀️💦
     </div>
   </div>
 
-  <!-- Celebration Ribbon Overlay Container -->
+  <!-- Celebration Ribbon Overlay -->
   <div id="ribbonOverlay" class="fixed inset-0 pointer-events-none z-50 flex items-center justify-center hidden">
     <div id="ribbonCard" class="bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 text-white font-black text-xl sm:text-3xl px-8 py-5 rounded-3xl shadow-2xl border-4 border-white text-center transform">
       <span id="ribbonText">🎗️ Super Learner Ribbon! 🎗️</span>
@@ -59,7 +53,7 @@
 
   <div class="w-full max-w-4xl mx-auto px-3 py-4 sm:p-6 space-y-5 relative z-10 box-border">
 
-    <!-- Header -->
+    <!-- HEADER -->
     <header class="bg-white/95 rounded-3xl p-4 shadow-lg border-2 sm:border-4 border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3 backdrop-blur-sm">
       <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
         <button id="avatarBtn" onclick="changeEmoji()" title="Click to change emoji!" class="text-3xl sm:text-4xl bg-indigo-100 hover:bg-indigo-200 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl transition transform active:scale-95 shadow-inner flex items-center justify-center overflow-hidden border-2 border-indigo-300 flex-shrink-0">
@@ -72,13 +66,13 @@
         </label>
 
         <div class="min-w-0 flex-1">
-          <input type="text" id="heroName" value="Super Jiya's Adventure" onchange="saveUserData()"
+          <input type="text" id="heroName" value="Super Jiya's Adventure" oninput="saveUserData()"
                  class="text-xl sm:text-2xl font-black text-indigo-900 border-b-2 border-dotted border-indigo-200 focus:outline-none focus:border-indigo-600 bg-transparent w-full truncate">
           <p id="timeThemeIndicator" class="text-gray-500 text-xs sm:text-sm">HQ Dashboard & Learning Journal</p>
         </div>
       </div>
 
-      <!-- Header Right Container (Stars + Reset) -->
+      <!-- HEADER RIGHT (Stars & Reset Button) -->
       <div class="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
         <div class="flex items-center gap-2 bg-amber-50 px-3.5 py-2 sm:py-2.5 rounded-2xl border border-amber-300 shadow-sm">
           <span class="text-2xl sm:text-3xl">⭐</span>
@@ -88,14 +82,13 @@
           </div>
         </div>
 
-        <!-- Reset Button -->
-        <button onclick="resetApp()" title="Reset stars & photos" class="bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 sm:py-3 rounded-2xl shadow-md transition transform active:scale-95 flex items-center gap-1.5 flex-shrink-0 border border-rose-400">
+        <button onclick="resetApp()" title="Reset stars & data" class="bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 sm:py-3 rounded-2xl shadow-md transition transform active:scale-95 flex items-center gap-1.5 flex-shrink-0 border border-rose-400">
           🔄 <span>Reset</span>
         </button>
       </div>
     </header>
 
-    <!-- Quests Section -->
+    <!-- QUESTS SECTION -->
     <section class="bg-white/95 rounded-3xl p-4 sm:p-6 shadow-xl border-2 sm:border-4 border-purple-200 space-y-4 relative backdrop-blur-sm">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
@@ -158,7 +151,7 @@
       </div>
     </section>
 
-    <!-- Schoolwork Showcase Section -->
+    <!-- SCHOOLWORK SHOWCASE SECTION -->
     <section class="bg-white/95 rounded-3xl p-4 sm:p-6 shadow-xl border-2 sm:border-4 border-pink-200 space-y-4 backdrop-blur-sm">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div class="flex items-center gap-2">
@@ -178,14 +171,14 @@
       <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1"></div>
     </section>
 
-    <!-- Editable All About Me Card Section with Per-Row Submit Buttons -->
+    <!-- ALL ABOUT ME SECTION (With Individual Submit Buttons) -->
     <section class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-3xl p-4 sm:p-6 shadow-xl text-white border-2 sm:border-4 border-indigo-300">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div class="flex items-center gap-2">
           <span class="text-2xl sm:text-3xl">🦸‍♀️</span>
           <div>
             <h2 class="text-lg sm:text-xl font-black leading-tight">All About Me!</h2>
-            <p class="text-purple-100 text-xs sm:text-sm">Fill out each row and click submit to earn +1 ⭐ each!</p>
+            <p class="text-purple-100 text-xs sm:text-sm">Fill out each field and click Submit to earn +1 ⭐ per row!</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -195,17 +188,18 @@
         </div>
       </div>
 
-      <div class="space-y-3 bg-white/10 p-3 sm:p-4 rounded-2xl backdrop-blur-sm border border-white/10">
+      <div class="space-y-4 bg-white/10 p-4 rounded-2xl backdrop-blur-sm border border-white/10">
+        
         <!-- Row 1: Superpower -->
         <div class="space-y-1">
           <div class="flex items-center justify-between">
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-purple-200">My Secret Superpower</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-purple-200">My Secret Superpower</label>
             <span class="text-[10px] bg-amber-300 text-amber-950 font-black px-2 py-0.5 rounded-full">+1 ⭐</span>
           </div>
           <div class="flex items-center gap-2">
             <input type="text" id="superpowerInput" placeholder="e.g., Drawing / Math / Hugs!" oninput="saveUserData()"
                    class="flex-1 bg-white/20 border border-purple-200/30 rounded-xl px-3 py-2 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-amber-300 text-sm transition">
-            <button id="superpowerBtn" onclick="submitProfileField('superpower')" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs px-3 py-2 rounded-xl shadow transition transform active:scale-95 flex-shrink-0">
+            <button id="superpowerBtn" onclick="submitProfileField('superpower')" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs px-3.5 py-2 rounded-xl shadow transition transform active:scale-95 flex-shrink-0">
               Submit ✨
             </button>
           </div>
@@ -214,39 +208,40 @@
         <!-- Row 2: Favorite Color & Hobby -->
         <div class="space-y-1">
           <div class="flex items-center justify-between">
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-purple-200">Favorite Color & Hobby</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-purple-200">Favorite Color & Hobby</label>
             <span class="text-[10px] bg-amber-300 text-amber-950 font-black px-2 py-0.5 rounded-full">+1 ⭐</span>
           </div>
           <div class="flex items-center gap-2">
             <input type="text" id="favoriteInput" placeholder="e.g., Pink & Dancing" oninput="saveUserData()"
                    class="flex-1 bg-white/20 border border-purple-200/30 rounded-xl px-3 py-2 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-amber-300 text-sm transition">
-            <button id="favoriteBtn" onclick="submitProfileField('favorite')" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs px-3 py-2 rounded-xl shadow transition transform active:scale-95 flex-shrink-0">
+            <button id="favoriteBtn" onclick="submitProfileField('favorite')" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs px-3.5 py-2 rounded-xl shadow transition transform active:scale-95 flex-shrink-0">
               Submit ✨
             </button>
           </div>
         </div>
 
-        <!-- Row 3: Bio / My Story -->
+        <!-- Row 3: My Story / Bio -->
         <div class="space-y-1">
           <div class="flex items-center justify-between">
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-purple-200">My Story (Bio)</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-purple-200">My Story (Bio)</label>
             <span class="text-[10px] bg-amber-300 text-amber-950 font-black px-2 py-0.5 rounded-full">+1 ⭐</span>
           </div>
           <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-2">
             <textarea id="bioInput" rows="2" placeholder="Write something fun about yourself here!" oninput="saveUserData()"
                       class="flex-1 bg-white/20 border border-purple-200/30 rounded-xl px-3 py-2 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-amber-300 text-sm leading-snug transition"></textarea>
-            <button id="bioBtn" onclick="submitProfileField('bio')" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs px-3 py-2 rounded-xl shadow transition transform active:scale-95 flex-shrink-0 h-10">
+            <button id="bioBtn" onclick="submitProfileField('bio')" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs px-3.5 py-2 rounded-xl shadow transition transform active:scale-95 flex-shrink-0 sm:h-10">
               Submit ✨
             </button>
           </div>
         </div>
+
       </div>
     </section>
 
   </div>
 
   <script>
-    // --- SUPABASE CONFIGURATION ---
+    // --- SUPABASE SETUP ---
     const SUPABASE_URL = 'https://knkdpgeqsaqrydkdzlza.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtua2RwZ2Vxc2Fxcnlka2R6bHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwNTE3OTYsImV4cCI6MjEwNjYyNzc5Nn0.rRfkPsMoJEGs-boWFc0eqTeaB1JgN6mTx43TWEZCU9c';
     
@@ -263,109 +258,18 @@
     let selfieCount = 0;
     const emojis = ['🌟', '🦸‍♀️', '🎨', '🚀', '🦄', '🦁', '🧜‍♀️', '⚡'];
     let currentEmojiIndex = 0;
-    let localGallery = [];
 
-    const ribbonMessages = [
-      "🎗️ Super Learner Ribbon! 🎗️",
-      "🔥 Streak Master Badge! 🔥",
-      "⭐ Genius Star Unlocked! ⭐",
-      "🏆 Superstar Champion! 🏆",
-      "🎉 Amazing Work Jiya! 🎉"
-    ];
-
-    // --- AUTOMATIC 24-HOUR COLOR ROTATION ---
-    const hourlyThemes = {
-      0:  { bg: 'bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950', name: 'Midnight Starlight 🌌' },
-      2:  { bg: 'bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900', name: 'Deep Night Dreamer 🌙' },
-      4:  { bg: 'bg-gradient-to-br from-indigo-800 via-purple-800 to-pink-900', name: 'Early Dawn Sky 🌄' },
-      6:  { bg: 'bg-gradient-to-br from-amber-200 via-orange-100 to-rose-200', name: 'Golden Sunrise ☀️' },
-      8:  { bg: 'bg-gradient-to-br from-sky-200 via-indigo-100 to-purple-100', name: 'Morning Glow 🌤️' },
-      10: { bg: 'bg-gradient-to-br from-purple-100 via-pink-50 to-amber-100', name: 'Bright Learning Time 🎒' },
-      12: { bg: 'bg-gradient-to-br from-amber-100 via-yellow-50 to-pink-100', name: 'High Noon Sunshine ☀️' },
-      14: { bg: 'bg-gradient-to-br from-teal-100 via-emerald-50 to-cyan-100', name: 'Ocean Breeze Afternoon 🌊' },
-      16: { bg: 'bg-gradient-to-br from-rose-100 via-orange-100 to-amber-100', name: 'Golden Hour Dusk 🌆' },
-      18: { bg: 'bg-gradient-to-br from-purple-200 via-pink-200 to-indigo-200', name: 'Twilight Sky 🌇' },
-      20: { bg: 'bg-gradient-to-br from-indigo-900 via-purple-800 to-slate-800', name: 'Evening Adventure 🌃' },
-      22: { bg: 'bg-gradient-to-br from-slate-950 via-indigo-900 to-blue-950', name: 'Cozy Night Sky 🌌' }
-    };
-
-    function update24HourTheme() {
-      const currentHour = new Date().getHours();
-      const themeKeys = Object.keys(hourlyThemes).map(Number).sort((a, b) => a - b);
-      let selectedKey = 0;
-      for (let k of themeKeys) {
-        if (currentHour >= k) selectedKey = k;
-      }
-
-      const theme = hourlyThemes[selectedKey];
-      const appBody = document.getElementById('appBody');
-      appBody.className = `${theme.bg} min-h-screen font-sans relative pb-12 transition-all duration-1000`;
-      
-      const indicator = document.getElementById('timeThemeIndicator');
-      if (indicator) {
-        indicator.innerText = `HQ Dashboard • Theme: ${theme.name}`;
-      }
-    }
-
-    // --- MERMAID JUMPING & WATER SPLASH CONFETTI ---
-    function triggerMermaidSplash(msg) {
-      const container = document.getElementById('mermaidContainer');
-      const graphic = document.getElementById('mermaidGraphic');
-
-      container.classList.remove('hidden');
-      graphic.classList.remove('mermaid-active');
-      void graphic.offsetWidth; // Force reflow
-      graphic.classList.add('mermaid-active');
-
-      setTimeout(() => {
-        container.classList.add('hidden');
-      }, 2500);
-
-      if (typeof confetti === 'function') {
-        const waterColors = ['#06b6d4', '#0284c7', '#38bdf8', '#7dd3fc', '#00d2ff', '#ffffff', '#e0f2fe'];
-        confetti({
-          particleCount: 100,
-          spread: 80,
-          startVelocity: 55,
-          scalar: 1.3,
-          colors: waterColors,
-          origin: { x: 0.5, y: 0.9 }
-        });
-
-        setTimeout(() => {
-          confetti({
-            particleCount: 60,
-            angle: 60,
-            spread: 70,
-            startVelocity: 45,
-            colors: waterColors,
-            origin: { x: 0.1, y: 0.8 }
-          });
-          confetti({
-            particleCount: 60,
-            angle: 120,
-            spread: 70,
-            startVelocity: 45,
-            colors: waterColors,
-            origin: { x: 0.9, y: 0.8 }
-          });
-        }, 300);
-      }
-
-      triggerCelebration(msg);
-    }
-
-    // --- ALL ABOUT ME ROW SUBMISSION LOGIC ---
+    // --- SUBMIT LOGIC FOR "ALL ABOUT ME" ROWS ---
     function submitProfileField(fieldType) {
       const fieldInput = document.getElementById(`${fieldType}Input`);
-      if (!fieldInput.value.trim()) {
-        alert("Please type something before submitting!");
+      if (!fieldInput || !fieldInput.value.trim()) {
+        alert("Please write something in the box before submitting!");
         return;
       }
 
       const isCompleted = localStorage.getItem(`jiya_profile_${fieldType}_done`) === 'true';
       if (isCompleted) {
-        alert("You've already earned a star for this row! You can keep editing your text.");
+        alert("You have already earned a star for this row! You can update your answer anytime.");
         return;
       }
 
@@ -373,101 +277,35 @@
       localStorage.setItem(`jiya_profile_${fieldType}_done`, 'true');
       markProfileFieldDoneUI(fieldType);
       saveUserData();
-      triggerMermaidSplash(`🌟 Super Row Completed! +1 ⭐`);
+      triggerMermaidSplash("🌟 All About Me Row Complete! +1 ⭐");
     }
 
     function markProfileFieldDoneUI(fieldType) {
       const btn = document.getElementById(`${fieldType}Btn`);
       if (btn) {
         btn.innerText = "Completed! ✅";
-        btn.className = "bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded-xl shadow cursor-default flex-shrink-0";
+        btn.className = "bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow cursor-default flex-shrink-0";
       }
     }
 
-    function readFileAsDataURL(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+    // --- GENERAL APP LOGIC ---
+    function addStars(num) {
+      stars += num;
+      document.getElementById('starCount').innerText = stars;
+      saveUserData();
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      update24HourTheme();
-      setInterval(update24HourTheme, 60000);
-      loadUserData();
-      loadPhotosFromCloud();
-      loadStateFromSupabase();
-    });
+    function saveUserData() {
+      localStorage.setItem('jiya_stars', stars);
+      localStorage.setItem('jiya_selfie_count', selfieCount);
+      localStorage.setItem('jiya_hero_name', document.getElementById('heroName').value);
+      localStorage.setItem('jiya_superpower', document.getElementById('superpowerInput').value);
+      localStorage.setItem('jiya_favorite', document.getElementById('favoriteInput').value);
+      localStorage.setItem('jiya_bio', document.getElementById('bioInput').value);
 
-    async function loadStateFromSupabase() {
-      if (!supabaseClient) return;
-      try {
-        const { data, error } = await supabaseClient
-          .from('app_state')
-          .select('data')
-          .eq('id', 'jiya_dashboard')
-          .single();
-
-        if (!error && data && data.data) {
-          const cloudState = data.data;
-          stars = cloudState.stars ?? stars;
-          selfieCount = cloudState.selfieCount ?? selfieCount;
-          document.getElementById('starCount').innerText = stars;
-          updateSelfieBadge();
-
-          if (cloudState.heroName) document.getElementById('heroName').value = cloudState.heroName;
-          if (cloudState.superpower) document.getElementById('superpowerInput').value = cloudState.superpower;
-          if (cloudState.favorite) document.getElementById('favoriteInput').value = cloudState.favorite;
-          if (cloudState.bio) document.getElementById('bioInput').value = cloudState.bio;
-          if (cloudState.profileAvatar) showAvatarPhoto(cloudState.profileAvatar);
-
-          ['superpower', 'favorite', 'bio'].forEach(field => {
-            if (cloudState[`profile_${field}_done`]) markProfileFieldDoneUI(field);
-          });
-
-          if (cloudState.tasks) {
-            for (let i = 1; i <= 3; i++) {
-              if (cloudState.tasks[i]) {
-                if (cloudState.tasks[i].title) document.getElementById(`task${i}Title`).value = cloudState.tasks[i].title;
-                if (cloudState.tasks[i].ans) document.getElementById(`task${i}Ans`).value = cloudState.tasks[i].ans;
-                if (cloudState.tasks[i].done) markTaskDoneUI(i);
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('Supabase state load error:', err);
-      }
-    }
-
-    async function saveStateToSupabase() {
-      if (!supabaseClient) return;
-      try {
-        const statePayload = {
-          stars: stars,
-          selfieCount: selfieCount,
-          heroName: document.getElementById('heroName').value,
-          superpower: document.getElementById('superpowerInput').value,
-          favorite: document.getElementById('favoriteInput').value,
-          bio: document.getElementById('bioInput').value,
-          profile_superpower_done: localStorage.getItem('jiya_profile_superpower_done') === 'true',
-          profile_favorite_done: localStorage.getItem('jiya_profile_favorite_done') === 'true',
-          profile_bio_done: localStorage.getItem('jiya_profile_bio_done') === 'true',
-          profileAvatar: localStorage.getItem('jiya_profile_avatar') || null,
-          tasks: {
-            1: { title: document.getElementById('task1Title').value, ans: document.getElementById('task1Ans').value, done: localStorage.getItem('jiya_task_1_done') === 'true' },
-            2: { title: document.getElementById('task2Title').value, ans: document.getElementById('task2Ans').value, done: localStorage.getItem('jiya_task_2_done') === 'true' },
-            3: { title: document.getElementById('task3Title').value, ans: document.getElementById('task3Ans').value, done: localStorage.getItem('jiya_task_3_done') === 'true' }
-          }
-        };
-
-        await supabaseClient
-          .from('app_state')
-          .upsert({ id: 'jiya_dashboard', data: statePayload, updated_at: new Date() });
-      } catch (err) {
-        console.warn('Supabase state sync error:', err);
+      for (let i = 1; i <= 3; i++) {
+        localStorage.setItem(`jiya_task_${i}_title`, document.getElementById(`task${i}Title`).value);
+        localStorage.setItem(`jiya_task_${i}_ans`, document.getElementById(`task${i}Ans`).value);
       }
     }
 
@@ -498,34 +336,12 @@
       if (savedAvatar) showAvatarPhoto(savedAvatar);
     }
 
-    function saveUserData() {
-      localStorage.setItem('jiya_stars', stars);
-      localStorage.setItem('jiya_selfie_count', selfieCount);
-      localStorage.setItem('jiya_hero_name', document.getElementById('heroName').value);
-      localStorage.setItem('jiya_superpower', document.getElementById('superpowerInput').value);
-      localStorage.setItem('jiya_favorite', document.getElementById('favoriteInput').value);
-      localStorage.setItem('jiya_bio', document.getElementById('bioInput').value);
-
-      for (let i = 1; i <= 3; i++) {
-        localStorage.setItem(`jiya_task_${i}_title`, document.getElementById(`task${i}Title`).value);
-        localStorage.setItem(`jiya_task_${i}_ans`, document.getElementById(`task${i}Ans`).value);
-      }
-
-      saveStateToSupabase();
-    }
-
-    function addStars(num) {
-      stars += num;
-      document.getElementById('starCount').innerText = stars;
-      saveUserData();
-    }
-
-    async function resetApp() {
-      if (!confirm("Are you sure you want to reset stars to 0 and remove all saved photos?")) return;
+    // --- RESET APP FUNCTIONALITY ---
+    function resetApp() {
+      if (!confirm("Are you sure you want to reset stars to 0 and clear completed statuses?")) return;
 
       stars = 0;
       selfieCount = 0;
-      localGallery = [];
 
       localStorage.removeItem('jiya_stars');
       localStorage.removeItem('jiya_selfie_count');
@@ -537,38 +353,12 @@
         const btn = document.getElementById(`${field}Btn`);
         if (btn) {
           btn.innerText = "Submit ✨";
-          btn.className = "bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs px-3 py-2 rounded-xl shadow transition transform active:scale-95 flex-shrink-0";
+          btn.className = "bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs px-3.5 py-2 rounded-xl shadow transition transform active:scale-95 flex-shrink-0";
         }
       });
 
       for (let i = 1; i <= 3; i++) {
         localStorage.removeItem(`jiya_task_${i}_done`);
-      }
-
-      if (supabaseClient) {
-        try {
-          const { data: fileList } = await supabaseClient.storage.from('schoolwork-photos').list();
-          if (fileList && fileList.length > 0) {
-            const filesToRemove = fileList
-              .map(f => f.name)
-              .filter(name => name !== '.emptyFolderPlaceholder');
-            if (filesToRemove.length > 0) {
-              await supabaseClient.storage.from('schoolwork-photos').remove(filesToRemove);
-            }
-          }
-        } catch (err) {
-          console.warn('Supabase storage clear warning:', err);
-        }
-      }
-
-      saveStateToSupabase();
-
-      document.getElementById('starCount').innerText = '0';
-      document.getElementById('gallery').innerHTML = '';
-      document.getElementById('avatarDisplay').innerHTML = emojis[0];
-      updateSelfieBadge();
-
-      for (let i = 1; i <= 3; i++) {
         const btn = document.getElementById(`task${i}Btn`);
         if (btn) {
           btn.innerText = "Submit ✨";
@@ -577,13 +367,65 @@
         }
       }
 
-      alert("App reset successfully! Stars set to 0 and saved photos removed.");
+      document.getElementById('starCount').innerText = '0';
+      document.getElementById('gallery').innerHTML = '';
+      document.getElementById('avatarDisplay').innerHTML = emojis[0];
+      updateSelfieBadge();
+
+      alert("Dashboard reset successfully!");
+    }
+
+    // --- QUEST TASK LOGIC ---
+    function submitTask(taskNum) {
+      const ansInput = document.getElementById(`task${taskNum}Ans`);
+      if (!ansInput.value.trim()) {
+        alert("Please write your answer first!");
+        return;
+      }
+
+      addStars(3);
+      localStorage.setItem(`jiya_task_${taskNum}_done`, 'true');
+      markTaskDoneUI(taskNum);
+      saveUserData();
+      triggerMermaidSplash(`🎯 Task ${taskNum} Complete! +3 ⭐`);
+    }
+
+    function markTaskDoneUI(taskNum) {
+      const btn = document.getElementById(`task${taskNum}Btn`);
+      if (btn) {
+        btn.innerText = "Completed! ✅";
+        btn.className = "bg-green-600 text-white font-bold text-xs px-3 py-2 rounded-xl shadow cursor-default";
+        btn.onclick = null;
+      }
+    }
+
+    // --- ANIMATION / CELEBRATION LOGIC ---
+    function triggerMermaidSplash(msg) {
+      const container = document.getElementById('mermaidContainer');
+      const graphic = document.getElementById('mermaidGraphic');
+
+      container.classList.remove('hidden');
+      graphic.classList.remove('mermaid-active');
+      void graphic.offsetWidth;
+      graphic.classList.add('mermaid-active');
+
+      setTimeout(() => container.classList.add('hidden'), 2500);
+
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.8 }
+        });
+      }
+
+      triggerCelebration(msg);
     }
 
     function triggerCelebration(msg) {
       const overlay = document.getElementById('ribbonOverlay');
       const ribbonText = document.getElementById('ribbonText');
-      ribbonText.innerText = msg || ribbonMessages[Math.floor(Math.random() * ribbonMessages.length)];
+      ribbonText.innerText = msg || "🎗️ Super Learner Ribbon! 🎗️";
       
       overlay.classList.remove('hidden');
       overlay.classList.add('ribbon-pop');
@@ -591,7 +433,7 @@
       setTimeout(() => {
         overlay.classList.add('hidden');
         overlay.classList.remove('ribbon-pop');
-      }, 4000);
+      }, 3500);
     }
 
     function changeEmoji() {
@@ -609,172 +451,70 @@
       const file = event.target.files[0];
       if (!file) return;
 
-      const display = document.getElementById('avatarDisplay');
-      display.innerHTML = `<span class="text-xs font-bold text-indigo-600">⏳...</span>`;
-
-      try {
-        let photoUrl = null;
-
-        if (supabaseClient) {
-          const fileName = `avatar_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-          const { data, error } = await supabaseClient.storage.from('schoolwork-photos').upload(fileName, file);
-          if (!error) {
-            const { data: urlData } = supabaseClient.storage.from('schoolwork-photos').getPublicUrl(fileName);
-            photoUrl = urlData.publicUrl;
-          }
-        }
-
-        if (!photoUrl) photoUrl = await readFileAsDataURL(file);
-
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const photoUrl = e.target.result;
         localStorage.setItem('jiya_profile_avatar', photoUrl);
         showAvatarPhoto(photoUrl);
-
+        
         selfieCount++;
         if (selfieCount <= 3) addStars(1);
         else saveUserData();
 
         updateSelfieBadge();
-        triggerMermaidSplash("📸 Selfie Star Awarded! 🧜‍♀️🌟");
-
-      } catch (err) {
-        console.error('Avatar upload error:', err);
-        display.innerHTML = emojis[currentEmojiIndex];
-      }
+        triggerMermaidSplash("📸 Selfie Star Awarded! 🌟");
+      };
+      reader.readAsDataURL(file);
     }
 
     function showAvatarPhoto(url) {
       document.getElementById('avatarDisplay').innerHTML = `<img src="${url}" class="w-full h-full object-cover rounded-2xl" alt="Profile Selfie" />`;
     }
 
-    function submitTask(taskNum) {
-      const ansInput = document.getElementById(`task${taskNum}Ans`);
-      if (!ansInput.value.trim()) {
-        alert("Please write your answer first!");
-        return;
-      }
-
-      addStars(3);
-      localStorage.setItem(`jiya_task_${taskNum}_done`, 'true');
-      markTaskDoneUI(taskNum);
-      saveUserData();
-      triggerMermaidSplash(`🎯 Task ${taskNum} Complete! +3 ⭐`);
-    }
-
-    function markTaskDoneUI(taskNum) {
-      const btn = document.getElementById(`task${taskNum}Btn`);
-      btn.innerText = "Completed! ✅";
-      btn.className = "bg-green-600 text-white font-bold text-xs px-3 py-2 rounded-xl shadow cursor-default";
-      btn.onclick = null;
-    }
-
     async function handleFileUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      const btnText = document.getElementById('uploadBtnText');
-      btnText.innerText = '⏳ Uploading...';
-
-      try {
-        let photoUrl = null;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const photoUrl = e.target.result;
         const photoId = `photo_${Date.now()}`;
-
-        if (supabaseClient) {
-          const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-          const { data, error } = await supabaseClient.storage.from('schoolwork-photos').upload(fileName, file);
-          if (!error) {
-            const { data: urlData } = supabaseClient.storage.from('schoolwork-photos').getPublicUrl(fileName);
-            photoUrl = urlData.publicUrl;
-          }
-        }
-
-        if (!photoUrl) photoUrl = await readFileAsDataURL(file);
-
-        localGallery = JSON.parse(localStorage.getItem('jiya_local_gallery') || '[]');
-        localGallery.unshift({ id: photoId, url: photoUrl, name: file.name });
-        localStorage.setItem('jiya_local_gallery', JSON.stringify(localGallery.slice(0, 30)));
-
+        
         renderPhotoCard(photoId, photoUrl, file.name);
         addStars(1);
-        triggerMermaidSplash("📝 Schoolwork Saved! +1 ⭐ 🧜‍♀️");
-
-      } catch (err) {
-        console.error('File upload error:', err);
-        alert('Could not process photo upload. Please try again.');
-      } finally {
-        btnText.innerText = '➕ Snap Schoolwork';
-      }
+        triggerMermaidSplash("📝 Schoolwork Saved! +1 ⭐");
+      };
+      reader.readAsDataURL(file);
     }
 
     function renderPhotoCard(id, url, title) {
       const gallery = document.getElementById('gallery');
-      if (document.getElementById(id)) return;
-
       const newCard = document.createElement('div');
       newCard.id = id;
       newCard.className = 'bg-pink-100/80 rounded-2xl p-2 border border-pink-200 flex flex-col justify-between shadow-sm relative overflow-hidden';
-      
-      const catEmoji = ['🖼', '📝', '✨', '🖍'][Math.floor(Math.random() * 4)];
 
       newCard.innerHTML = `
-        <button onclick="deletePhoto('${id}')" title="Delete Photo" class="absolute top-1.5 right-1.5 z-20 bg-red-500 hover:bg-red-600 text-white font-black w-6 h-6 rounded-full flex items-center justify-center text-xs shadow">
+        <button onclick="deletePhoto('${id}')" title="Delete Photo" class="absolute top-1.5 right-1.5 z-20 bg-red-500 text-white font-black w-6 h-6 rounded-full flex items-center justify-center text-xs shadow">
           ✕
         </button>
         <div class="h-28 sm:h-36 bg-pink-50 rounded-xl mb-1.5 flex items-center justify-center overflow-hidden border border-pink-100 relative">
           <img src="${url}" class="w-full h-full object-cover rounded-xl" />
-          <span class="absolute bottom-1 left-1 text-base">${catEmoji}</span>
         </div>
         <p class="font-bold text-gray-800 text-xs truncate">${title.substring(0, 12)}...</p>
-        <p class="text-[10px] text-gray-400 mt-0.5">Saved Journal Entry ☁️</p>
       `;
       gallery.prepend(newCard);
     }
 
-    async function deletePhoto(id) {
-      if (confirm("Do you want to remove this photo?")) {
+    function deletePhoto(id) {
+      if (confirm("Remove this photo?")) {
         const card = document.getElementById(id);
         if (card) card.remove();
-
-        localGallery = JSON.parse(localStorage.getItem('jiya_local_gallery') || '[]');
-        localGallery = localGallery.filter(item => item.id !== id);
-        localStorage.setItem('jiya_local_gallery', JSON.stringify(localGallery));
-
-        if (supabaseClient && id.startsWith('cloud_')) {
-          const fileName = id.replace('cloud_', '');
-          try {
-            await supabaseClient.storage.from('schoolwork-photos').remove([fileName]);
-          } catch (e) {
-            console.warn('Cloud photo deletion failed:', e);
-          }
-        }
       }
     }
 
-    async function loadPhotosFromCloud() {
-      let loadedFromCloud = false;
-
-      if (supabaseClient) {
-        try {
-          const { data, error } = await supabaseClient.storage.from('schoolwork-photos').list('', { sortBy: { column: 'created_at', order: 'desc' } });
-          if (!error && data && data.length > 0) {
-            data.forEach(file => {
-              if (file.name === '.emptyFolderPlaceholder' || file.name.startsWith('avatar_')) return;
-              const { data: urlData } = supabaseClient.storage.from('schoolwork-photos').getPublicUrl(file.name);
-              renderPhotoCard(`cloud_${file.name}`, urlData.publicUrl, file.name);
-            });
-            loadedFromCloud = true;
-          }
-        } catch (e) {
-          console.warn('Cloud gallery load error:', e);
-        }
-      }
-
-      if (!loadedFromCloud) {
-        localGallery = JSON.parse(localStorage.getItem('jiya_local_gallery') || '[]');
-        localGallery.forEach(item => {
-          renderPhotoCard(item.id || `local_${Math.random()}`, item.url, item.name);
-        });
-      }
-    }
+    window.addEventListener('DOMContentLoaded', () => {
+      loadUserData();
+    });
   </script>
 </body>
 </html>
